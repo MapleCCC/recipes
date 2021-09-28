@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 from functools import partial
 from types import ModuleType
 from typing import cast
@@ -6,7 +7,15 @@ from typing import cast
 from lazy_object_proxy import Proxy
 
 
-__all__ = ["lazy_import_module"]
+__all__ = ["importable", "lazy_import_module"]
+
+
+def importable(module: str) -> bool:
+    """Check if a module is importable."""
+
+    # Reference: https://docs.python.org/3/library/importlib.html#checking-if-a-module-can-be-imported
+
+    return importlib.util.find_spec(module) is not None
 
 
 def lazy_import_module(name: str, packge: str = None) -> ModuleType:
