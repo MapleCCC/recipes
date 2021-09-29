@@ -2,7 +2,7 @@ import inspect
 import parser
 from collections.abc import Callable
 from types import FunctionType
-from typing import Any, cast
+from typing import Any, Union, cast
 
 from typing_extensions import ParamSpec
 
@@ -21,9 +21,12 @@ P = ParamSpec("P")
 #     Let's use an object-oriented concrete syntax tree library instead.
 
 
-def get_function_body_source(func: FunctionType, unindent: bool = False) -> str:
+def get_function_body_source(func: Union[str, FunctionType], unindent: bool = False) -> str:
     """
     Retrieve source code of the body of the function.
+
+    The function is supplied as either a function object (FunctionType), or a string of
+    source code.
 
     Set the `unindent` parameter to `True` to return an unindented source code.
     """
@@ -37,7 +40,7 @@ def get_function_body_source(func: FunctionType, unindent: bool = False) -> str:
     # 3. Extract the source code of function body after the source line of the colon
     # token.
 
-    source = inspect.getsource(func)
+    source = func if isinstance(func, str) else inspect.getsource(func)
 
     syntax_tree = parser.suite(unindent_source(source))
 
