@@ -1,0 +1,4 @@
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+lines_after_imports = 2
