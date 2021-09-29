@@ -3,14 +3,13 @@ import re
 import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
-from pathlib import Path
 from typing import TypeVar
 
 from typing_extensions import ParamSpec
 
 from .functools import noop, raiser
 from .inspect import get_frame_curr_line
-from .sourcelib import indent_level, unindent_source
+from .sourcelib import indent_level, is_source_line, unindent_source
 
 
 __all__ = ["mock_globals", "contextmanagerclass", "skip_context"]
@@ -122,10 +121,9 @@ class literal_block(skip_context):
 
         super().__enter__()
 
-        filename, lineno, *_ = inspect.getframeinfo(sys._getframe(1))
-
-        source_code = Path(filename).read_text(encoding="utf-8")
-        lines = source_code.splitlines()
+        frame = sys._getframe(1)
+        lineno = frame.f_lineno
+        lines = inspect.getsource(frame).splitlines()
 
         start_lineno = lineno + 1
         end_lineno = start_lineno
@@ -134,11 +132,7 @@ class literal_block(skip_context):
 
         while end_lineno + 1 < len(lines):
             line = lines[end_lineno]
-            if (
-                line.lstrip()
-                and not line.lstrip().startswith("#")
-                and indent_level(line) <= parent_level
-            ):
+            if is_source_line(line) and indent_level(line) <= parent_level:
                 break
             end_lineno += 1
 
