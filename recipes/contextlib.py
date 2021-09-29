@@ -3,12 +3,12 @@ import re
 import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
+from types import TracebackType
 from typing import TypeVar
 
 from typing_extensions import ParamSpec
 
 from .functools import noop, raiser
-from .inspect import get_frame_curr_line
 from .sourcelib import indent_level, is_source_line, unindent_source
 
 
@@ -78,7 +78,7 @@ def contextmanagerclass(
 
 
 class SkipContext(Exception):
-    """A helper exception for `skip_context()`"""
+    """A helper exception for skipping context"""
 
 
 @contextmanagerclass
@@ -86,14 +86,8 @@ def skip_context() -> Generator[None, None, None]:
     """Return a context manager that skip the body of the with statement."""
 
     sys.settrace(noop)
-
-    frame = sys._getframe(1)
-    while (line := get_frame_curr_line(frame)) and re.fullmatch(
-        r"\s*with (?P<context_manager>.+):\s*(?P<comment>#.*)?", line
-    ):
-        frame = frame.f_back
-        assert frame is not None
-    frame.f_trace = raiser(SkipContext)
+    # FIXME magic number is bad
+    sys._getframe(2).f_trace = raiser(SkipContext)
 
     try:
         yield
@@ -101,7 +95,7 @@ def skip_context() -> Generator[None, None, None]:
         pass
 
 
-class literal_block(skip_context):
+class literal_block(AbstractContextManager[str]):
     """
     Transform a block of code to literal string, and not execute the code. This utility
     is useful for writing source code in literal string, and get syntax highlighting
@@ -119,7 +113,7 @@ class literal_block(skip_context):
 
     def __enter__(self) -> str:
 
-        super().__enter__()
+        # Extract block source code
 
         frame = sys._getframe(1)
         lineno = frame.f_lineno
@@ -141,4 +135,20 @@ class literal_block(skip_context):
         # Remove trailing blank lines
         block_source = block_source.rstrip()
 
+        # Setup skip-context hack
+        sys.settrace(noop)
+        sys._getframe(1).f_trace = raiser(SkipContext)
+
         return block_source
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        traceback: TracebackType,
+    ) -> bool:
+
+        if isinstance(exc_value, SkipContext):
+            return True
+        else:
+            return False
