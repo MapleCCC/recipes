@@ -27,6 +27,10 @@ def unindent_source(text: str, *, reflow_comments: bool = True) -> str:
     if not reflow_comments:
         # Easy implementation where comments are treated verbatim
         margin = min(len(line) - len(line.lstrip()) for line in lines if line.strip())
+
+        if not margin:
+            return text
+
         return "\n".join(line[margin:] for line in lines)
 
     # Long implementation that reflows comments
@@ -37,6 +41,9 @@ def unindent_source(text: str, *, reflow_comments: bool = True) -> str:
         if not unindented or unindented.startswith("#"):
             continue
         margin = min(margin, len(line) - len(unindented))
+
+    if not margin:
+        return text
 
     new_lines = []
     for line in lines:
