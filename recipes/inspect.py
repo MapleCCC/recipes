@@ -1,12 +1,18 @@
 import inspect
 import parser
+from collections.abc import Callable
 from types import FunctionType
-from typing import cast
+from typing import Any, cast
+
+from typing_extensions import ParamSpec
 
 from .sourcelib import unindent_source
 
 
-__all__ = ["get_function_body_source"]
+__all__ = ["get_function_body_source", "bind_arguments"]
+
+
+P = ParamSpec("P")
 
 
 # FIXME typeshed bug STType.totuple() -> Tuple[Any, ...]
@@ -48,3 +54,15 @@ def get_function_body_source(func: FunctionType) -> str:
     body_source = "\n".join(body_source_lines)
 
     return body_source
+
+
+# TODO Any vs object
+def bind_arguments(
+    func: Callable[P, Any], *args: P.args, **kwargs: P.kwargs
+) -> dict[str, Any]:
+    """Bind arguments to function parameters, return the bound arguments as a dict"""
+
+    signature = inspect.signature(func)
+    bound_arguments = signature.bind(*args, **kwargs)
+    bound_arguments.apply_defaults()
+    return bound_arguments.arguments
