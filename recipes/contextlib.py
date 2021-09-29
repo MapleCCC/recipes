@@ -1,13 +1,16 @@
+import inspect
 import re
 import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
+from pathlib import Path
 from typing import TypeVar
 
 from typing_extensions import ParamSpec
 
 from .functools import noop, raiser
 from .inspect import get_frame_curr_line
+from .sourcelib import indent_level, unindent_source
 
 
 __all__ = ["mock_globals", "contextmanagerclass", "skip_context"]
@@ -97,3 +100,51 @@ def skip_context() -> Generator[None, None, None]:
         yield
     except SkipContext:
         pass
+
+
+class literal_block(skip_context):
+    """
+    Transform a block of code to literal string, and not execute the code. This utility
+    is useful for writing source code in literal string, and get syntax highlighting
+    when viewed in editor.
+
+    Usage:
+    ```
+    with literal_block() as source:
+        a = 1
+        b = 2
+
+    print(source)  # "a = 1\\nb = 2"
+    ```
+    """
+
+    def __enter__(self) -> str:
+
+        super().__enter__()
+
+        filename, lineno, *_ = inspect.getframeinfo(sys._getframe(1))
+
+        source_code = Path(filename).read_text(encoding="utf-8")
+        lines = source_code.splitlines()
+
+        start_lineno = lineno + 1
+        end_lineno = start_lineno
+
+        parent_level = indent_level(lines[lineno - 1])
+
+        while end_lineno + 1 < len(lines):
+            line = lines[end_lineno]
+            if (
+                line.lstrip()
+                and not line.lstrip().startswith("#")
+                and indent_level(line) <= parent_level
+            ):
+                break
+            end_lineno += 1
+
+        block_lines = lines[start_lineno - 1 : end_lineno]
+        block_source = unindent_source("\n".join(block_lines))
+        # Remove trailing blank lines
+        block_source = block_source.rstrip()
+
+        return block_source
