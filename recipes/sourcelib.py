@@ -1,6 +1,3 @@
-from .constants import MAX_INT
-
-
 __all__ = ["unindent_source"]
 
 
@@ -38,7 +35,7 @@ def unindent_source(text: str, *, reflow_comments: bool = True) -> str:
 
     if not reflow_comments:
         # Easy implementation where comments are treated verbatim
-        margin = min(len(line) - len(line.lstrip()) for line in lines if line.strip())
+        margin = min(indent_level(line) for line in lines if line.strip())
 
         if not margin:
             return text
@@ -47,10 +44,7 @@ def unindent_source(text: str, *, reflow_comments: bool = True) -> str:
 
     # Long implementation that reflows comments
 
-    margin = MAX_INT
-    for line in lines:
-        if is_source_line(line):
-            margin = min(margin, indent_level(line))
+    margin = min(indent_level(line) for line in lines if is_source_line(line))
 
     if not margin:
         return text
