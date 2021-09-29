@@ -21,9 +21,11 @@ P = ParamSpec("P")
 #     Let's use an object-oriented concrete syntax tree library instead.
 
 
-def get_function_body_source(func: FunctionType) -> str:
+def get_function_body_source(func: FunctionType, unindent: bool = False) -> str:
     """
     Retrieve source code of the body of the function.
+
+    Set the `unindent` parameter to `True` to return an unindented source code.
     """
 
     # 1. Retrieve source code of the function, which is then parsed into concrete syntax
@@ -53,7 +55,7 @@ def get_function_body_source(func: FunctionType) -> str:
     body_source_lines = source.splitlines()[body_start_lineno - 1 :]
     body_source = "\n".join(body_source_lines)
 
-    return body_source
+    return unindent_source(body_source) if unindent else body_source
 
 
 # TODO Any vs object
