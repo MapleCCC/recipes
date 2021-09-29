@@ -4,6 +4,18 @@ from .constants import MAX_INT
 __all__ = ["unindent_source"]
 
 
+def is_blank_line(line: str) -> bool:
+    return not line.strip()
+
+
+def is_comment_line(line: str) -> bool:
+    return line.lstrip().startswith("#")
+
+
+def is_source_line(line: str) -> bool:
+    return not is_blank_line(line) and not is_comment_line(line)
+
+
 def indent_level(line: str) -> int:
     """Get the indentation level of given line"""
 
@@ -37,20 +49,17 @@ def unindent_source(text: str, *, reflow_comments: bool = True) -> str:
 
     margin = MAX_INT
     for line in lines:
-        unindented = line.lstrip()
-        if not unindented or unindented.startswith("#"):
-            continue
-        margin = min(margin, len(line) - len(unindented))
+        if is_source_line(line):
+            margin = min(margin, indent_level(line))
 
     if not margin:
         return text
 
     new_lines = []
     for line in lines:
-        unindented = line.lstrip()
-        if unindented.startswith("#"):
-            new_lines.append(unindented)
-        else:
+        if is_source_line(line):
             new_lines.append(line[margin:])
+        else:
+            new_lines.append(line.lstrip())
 
     return "\n".join(new_lines)
