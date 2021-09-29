@@ -1,5 +1,6 @@
 import inspect
 import parser
+import symbol
 from collections.abc import Callable
 from types import FrameType, FunctionType
 from typing import Any, Optional, Union, cast
@@ -50,9 +51,14 @@ def get_function_body_source(func: Union[str, FunctionType], unindent: bool = Fa
     # Locate the colon token that marks the delimitations between function header and
     # function body.
     #
-    # Node chain: file_input -> stmt -> compound_stmt -> funcdef -> COLON
-    colon = st_tuple[1][1][1][4][3]
-    colon_lineno = colon[3]
+    # Node chain: file_input -> stmt -> compound_stmt -> (decorated ->) funcdef -> COLON
+    compound_stmt = st_tuple[1][1]
+    if compound_stmt[1][0] == symbol.decorated:
+        funcdef = compound_stmt[1][2]
+    else:
+        funcdef = compound_stmt[1]
+    colon = funcdef[4]
+    colon_lineno = colon[2]
 
     body_start_lineno = colon_lineno + 1
     body_source_lines = source.splitlines()[body_start_lineno - 1 :]
