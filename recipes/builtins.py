@@ -1,8 +1,9 @@
+import sys
 from collections.abc import MutableSequence
 from typing import TypeVar
 
 
-__all__ = ["hashable", "append"]
+__all__ = ["hashable", "append", "eval_in_caller_frame"]
 
 
 T = TypeVar("T")
@@ -24,3 +25,10 @@ def append(seq: MutableSequence[T], elem: T) -> int:
 
     seq.append(elem)
     return len(seq) - 1
+
+
+def eval_in_caller_frame(expr: str):
+    """Evaluate the expression in caller's frame"""
+
+    frame = sys._getframe(2)
+    return eval(expr, frame.f_globals, frame.f_locals)
