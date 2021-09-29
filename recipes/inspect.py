@@ -1,15 +1,15 @@
 import inspect
 import parser
 from collections.abc import Callable
-from types import FunctionType
-from typing import Any, Union, cast
+from types import FrameType, FunctionType
+from typing import Any, Optional, Union, cast
 
 from typing_extensions import ParamSpec
 
 from .sourcelib import unindent_source
 
 
-__all__ = ["get_function_body_source", "bind_arguments"]
+__all__ = ["get_function_body_source", "bind_arguments", "get_frame_curr_line"]
 
 
 P = ParamSpec("P")
@@ -71,3 +71,10 @@ def bind_arguments(
     bound_arguments = signature.bind(*args, **kwargs)
     bound_arguments.apply_defaults()
     return bound_arguments.arguments
+
+
+def get_frame_curr_line(frame: FrameType) -> Optional[str]:
+    """Get the current executing source line of a given frame, or None if not found"""
+
+    context = inspect.getframeinfo(frame).code_context
+    return None if context is None else context[0]
