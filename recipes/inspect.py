@@ -3,7 +3,7 @@ import parser
 import symbol
 from collections.abc import Callable
 from types import FrameType, FunctionType
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 from typing_extensions import ParamSpec
 
@@ -15,8 +15,6 @@ __all__ = ["get_function_body_source", "bind_arguments", "get_frame_curr_line"]
 
 P = ParamSpec("P")
 
-
-# FIXME typeshed bug STType.totuple() -> Tuple[Any, ...]
 
 # FIXME It is quite insane to use a sequence of magic numbers to inspect syntax tree.
 #     Let's use an object-oriented concrete syntax tree library instead.
@@ -46,7 +44,7 @@ def get_function_body_source(func: Union[str, FunctionType], unindent: bool = Fa
     syntax_tree = parser.suite(unindent_source(source))
 
     # Convert syntax tree to tuple representation
-    st_tuple = cast(tuple, syntax_tree.totuple(line_info=True))
+    st_tuple = syntax_tree.totuple(line_info=True)
 
     # Locate the colon token that marks the delimitations between function header and
     # function body.
