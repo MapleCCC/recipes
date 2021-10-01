@@ -19,41 +19,35 @@ def indent_level(line: str) -> int:
     return len(line) - len(line.lstrip())
 
 
-def unindent_source(text: str, *, reflow_comments: bool = True) -> str:
+def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
     """
     Unindent the source code.
 
-    By default, comments are reflowed such that they are justified to match the level of
-    their surrounding blocks. The reflow behavior can be turned off by setting the
-    `reflow_comments` parameter to `False`.
+    By default, outdented comments cause `ValueError` to get raised. This could be
+    mitigated by setting the `reflow_comments` parameter to `True` to reflow comments
+    such that they are justified to match the level of their surrounding blocks.
     """
 
     lines = text.splitlines()
-
     if not lines:
         return text
 
-    if not reflow_comments:
-        # Easy implementation where comments are treated verbatim
-        margin = min(indent_level(line) for line in lines if line.strip())
-
-        if not margin:
-            return text
-
-        return "\n".join(line[margin:] for line in lines)
-
-    # Long implementation that reflows comments
-
     margin = min(indent_level(line) for line in lines if is_source_line(line))
-
     if not margin:
         return text
 
     new_lines = []
+
     for line in lines:
-        if is_source_line(line):
+
+        if is_source_line(line) or is_blank_line(line):
             new_lines.append(line[margin:])
-        else:
-            new_lines.append(line.lstrip())
+
+        elif is_comment_line(line):
+            if reflow_comments:
+                new_lines.append(line.lstrip())
+
+            elif indent_level(line) < margin:
+                raise ValueError("can't unindent source code with outdented comments")
 
     return "\n".join(new_lines)
