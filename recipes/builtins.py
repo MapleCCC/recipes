@@ -1,9 +1,9 @@
 import sys
 from collections.abc import MutableSequence
-from typing import TypeVar
+from typing import Any, TypeVar
 
 
-__all__ = ["hashable", "append", "eval_in_caller_frame"]
+__all__ = ["hashable", "append", "eval_in_caller_frame", "NO_ARGUMENT"]
 
 
 T = TypeVar("T")
@@ -32,3 +32,7 @@ def eval_in_caller_frame(expr: str):
 
     frame = sys._getframe(2)
     return eval(expr, frame.f_globals, frame.f_locals)
+
+
+# A sentinel object to represent no argument to a parameter of a callable.
+NO_ARGUMENT: Any = object()
