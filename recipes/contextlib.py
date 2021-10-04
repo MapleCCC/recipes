@@ -12,7 +12,7 @@ from .functools import noop, raiser
 from .sourcelib import indent_level, is_source_line, unindent_source
 
 
-__all__ = ["mock_globals", "contextmanagerclass", "skip_context"]
+__all__ = ["mock_globals", "contextmanagerclass", "skip_context", "literal_block"]
 
 
 P = ParamSpec("P")
@@ -74,7 +74,6 @@ def contextmanagerclass(
                     raise RuntimeError("generator didn't stop")
 
     return wrapper
-
 
 
 class SkipContext(Exception):

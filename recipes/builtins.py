@@ -48,6 +48,7 @@ def append(seq: MutableSequence[T], elem: T) -> int:
     return len(seq) - 1
 
 
+# TODO deprecate
 def eval_in_caller_frame(expr: str):
     """Evaluate the expression in caller's frame"""
 

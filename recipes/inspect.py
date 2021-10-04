@@ -9,7 +9,7 @@ from libcst.metadata import PositionProvider
 from more_itertools import one
 from typing_extensions import ParamSpec
 
-from .builtins import ensure_type
+from .builtins import ensure_type, read_text
 
 
 __all__ = ["get_function_body_source", "bind_arguments", "get_frame_curr_line"]
@@ -20,8 +20,8 @@ P = ParamSpec("P")
 
 def getsourcefilesource(obj: object) -> Optional[str]:
     """
-    Return source of the source file where the object is defined, or None if not found.
-    Raise TypeError if the object is a built-in module, class or function.
+    Return source code of the Python source file where the object is defined, or None if
+    not found. Raise TypeError if the object is a built-in module, class or function.
     """
 
     sourcefile = inspect.getsourcefile(obj)
@@ -29,6 +29,7 @@ def getsourcefilesource(obj: object) -> Optional[str]:
 
 
 # TODO in an ideal world, we should annotate the parameter as of type `Union[FunctionType, LambdaType, MethodType]`
+# FIXME should not tamper with the outdented comments in the functin body source code.
 def get_function_body_source(func: Callable) -> Optional[str]:
     """
     Return source code of the body of the function, or None if not found.
@@ -60,6 +61,7 @@ def get_function_body_source(func: Callable) -> Optional[str]:
 
 
 # TODO Any vs object
+# TODO can we make the return type something like dict[str, Union[P.args, P.kwargs]] ?
 def bind_arguments(
     func: Callable[P, Any], *args: P.args, **kwargs: P.kwargs
 ) -> dict[str, Any]:

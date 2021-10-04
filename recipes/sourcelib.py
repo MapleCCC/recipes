@@ -1,3 +1,6 @@
+from .exceptions import Unreachable
+
+
 __all__ = ["unindent_source"]
 
 
@@ -52,5 +55,8 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
 
             else:
                 raise ValueError("can't unindent source code with outdented comments")
+
+        else:
+            raise Unreachable
 
     return "\n".join(new_lines)
