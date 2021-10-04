@@ -63,10 +63,10 @@ def read_text(file: StrPath, encoding: str = "utf-8") -> str:
     """
     Read text in UTF-8 encoding.
 
-    This is mostly a convenient utility to replace the boilerplate code when using
-    `open()` or `Path.read_text()`, since the caller doesn't need to specify the `"r"`
-    and `"t"` flags and doesn't need to explicitly specify `encoding="utf-8"` in
-    platforms where the `locale.getpreferredencoding()` doesn't return UTF-8.
+    This is mostly a convenient wrapper to reduce the boilerplate of `open()` and
+    `Path.read_text()`. The caller doesn't need to specify the `"r"` and `"t"` flags and
+    doesn't need to explicitly specify `encoding="utf-8"` in platforms where
+    `locale.getpreferredencoding()` doesn't return "UTF-8".
     """
 
     with open(file, "r", encoding=encoding) as f:
@@ -77,10 +77,10 @@ def write_text(file: StrPath, text: str, encoding: str = "utf-8") -> None:
     """
     Write text in UTF-8 encoding.
 
-    This is mostly a convenient utility to replace the boilerplate code when using
-    `open()` or `Path.write_text()`, since the caller doesn't need to specify the `"w"`
-    and `"t"` flags and doesn't need to explicitly specify `encoding="utf-8"` in
-    platforms where the `locale.getpreferredencoding()` doesn't return UTF-8.
+    This is mostly a convenient wrapper to reduce the boilerplate of `open()` and
+    `Path.write_text()`. The caller doesn't need to specify the `"w"` and `"t"` flags
+    and doesn't need to explicitly specify `encoding="utf-8"` in platforms where
+    `locale.getpreferredencoding()` doesn't return "UTF-8".
     """
 
     with open(file, "w", encoding=encoding) as f:
