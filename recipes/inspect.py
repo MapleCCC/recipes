@@ -85,6 +85,5 @@ def get_frame_curr_line(frame: FrameType) -> Optional[str]:
     context = frame_info.code_context
     if context is None:
         return None
-    line = one(context)
-
-    return line
+    else:
+        return one(context)
