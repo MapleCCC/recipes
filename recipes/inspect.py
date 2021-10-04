@@ -17,6 +17,16 @@ __all__ = ["get_function_body_source", "bind_arguments", "get_frame_curr_line"]
 P = ParamSpec("P")
 
 
+def getsourcefilesource(obj: object) -> Optional[str]:
+    """
+    Return source of the source file where the object is defined, or None if not found.
+    Raise TypeError if the object is a built-in module, class or function.
+    """
+
+    sourcefile = inspect.getsourcefile(obj)
+    return read_text(sourcefile) if sourcefile else None
+
+
 def get_function_body_source(func: Union[str, FunctionType], unindent: bool = False) -> str:
     """
     Retrieve source code of the body of the function.
