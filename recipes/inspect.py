@@ -1,14 +1,15 @@
 import inspect
 from collections.abc import Callable
-from types import FrameType, FunctionType
-from typing import Any, Optional, Union
+from types import FrameType, FunctionType, LambdaType, MethodType
+from typing import Any, Optional
 
 import libcst as cst
-from libcst.helpers import ensure_type
+import libcst.matchers
+from libcst.metadata import PositionProvider
 from more_itertools import one
 from typing_extensions import ParamSpec
 
-from .sourcelib import unindent_source
+from .builtins import ensure_type
 
 
 __all__ = ["get_function_body_source", "bind_arguments", "get_frame_curr_line"]
@@ -27,24 +28,35 @@ def getsourcefilesource(obj: object) -> Optional[str]:
     return read_text(sourcefile) if sourcefile else None
 
 
-def get_function_body_source(func: Union[str, FunctionType], unindent: bool = False) -> str:
+# TODO in an ideal world, we should annotate the parameter as of type `Union[FunctionType, LambdaType, MethodType]`
+def get_function_body_source(func: Callable) -> Optional[str]:
     """
-    Retrieve source code of the body of the function.
-
-    The function is supplied as either a function object (FunctionType), or a string of
-    source code.
-
-    Set the `unindent` parameter to `True` to return an unindented source code.
+    Return source code of the body of the function, or None if not found.
+    Raise TypeError if the function is built-in.
     """
 
-    source = func if isinstance(func, str) else inspect.getsource(func)
-    source = unindent_source(source)
+    if not isinstance(func, (FunctionType, LambdaType, MethodType)):
+        raise ValueError(f"expect a user-defined function, got {func}")
+
+    source = getsourcefilesource(func)
+    if source is None:
+        return None
 
     module = cst.parse_module(source)
-    funcdef = ensure_type(one(module.body), cst.FunctionDef)
+    wrapper = cst.MetadataWrapper(module, unsafe_skip_copy=True)
+
+    m = libcst.matchers
+    match_start_line = m.MatchMetadataIfTrue(
+        PositionProvider,
+        lambda position: position.start.line == func.__code__.co_firstlineno,
+    )
+    pattern = (m.FunctionDef | m.Lambda)(metadata=match_start_line)
+    matches = m.findall(wrapper, pattern)
+
+    funcdef = ensure_type(one(matches), (cst.FunctionDef, cst.Lambda))
     body_source = module.code_for_node(funcdef.body)
 
-    return unindent_source(body_source) if unindent else body_source
+    return body_source
 
 
 # TODO Any vs object
