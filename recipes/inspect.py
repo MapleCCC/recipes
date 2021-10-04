@@ -1,4 +1,5 @@
 import inspect
+import sys
 from collections.abc import Callable
 from types import FrameType, FunctionType, LambdaType, MethodType
 from typing import Any, Optional
@@ -17,6 +18,7 @@ __all__ = [
     "get_function_body_source",
     "bind_arguments",
     "get_frame_curr_line",
+    "getcallerframe",
 ]
 
 
@@ -87,3 +89,15 @@ def get_frame_curr_line(frame: FrameType) -> Optional[str]:
         return None
     else:
         return one(context)
+
+
+def getcallerframe() -> FrameType:
+    """Get the frame of the caller."""
+
+    try:
+        return sys._getframe(2)
+
+    except ValueError:
+        raise RuntimeError(
+            "getcallerframe() should be called from inside callable"
+        ) from None
