@@ -1,7 +1,7 @@
 from .exceptions import Unreachable
 
 
-__all__ = ["unindent_source"]
+__all__ = ["OutdentedCommentError", "unindent_source"]
 
 
 def is_blank_line(line: str) -> bool:
@@ -22,12 +22,16 @@ def indent_level(line: str) -> int:
     return len(line) - len(line.lstrip())
 
 
+class OutdentedCommentError(Exception):
+    "Raised when `unindent_source()` encounters outdented comments"
+
+
 def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
     """
     Unindent the source code.
 
-    By default, outdented comments cause `ValueError` to get raised. This could be
-    mitigated by setting the `reflow_comments` parameter to `True` to reflow comments
+    Outdented comments cause `OutdentedCommentError` to get raised. This could be
+    mitigated by setting the `reflow_comments` parameter to `True`, to reflow comments
     such that they are justified to match the level of their surrounding blocks.
     """
 
@@ -54,7 +58,8 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
                 new_lines.append(line[margin:])
 
             else:
-                raise ValueError("can't unindent source code with outdented comments")
+                error_message = "can't unindent source code with outdented comments"
+                raise OutdentedCommentError(error_message)
 
         else:
             raise Unreachable
