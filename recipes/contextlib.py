@@ -1,15 +1,19 @@
-import inspect
-import re
 import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
 from types import TracebackType
 from typing import TypeVar
 
+import libcst as cst
+import libcst.matchers
+from libcst.metadata import PositionProvider
+from more_itertools import one
 from typing_extensions import ParamSpec
 
+from .builtins import ensure_type
 from .functools import noop, raiser
-from .sourcelib import indent_level, is_source_line, unindent_source
+from .inspect import getcallerframe, getsourcefilesource
+from .sourcelib import OutdentedCommentError, unindent_source
 
 
 __all__ = ["mock_globals", "contextmanagerclass", "skip_context", "literal_block"]
@@ -112,33 +116,35 @@ class literal_block(AbstractContextManager[str]):
 
     def __enter__(self) -> str:
 
-        # Extract block source code
+        frame = getcallerframe()
 
-        frame = sys._getframe(1)
-        lineno = frame.f_lineno
-        lines = inspect.getsource(frame).splitlines()
+        source = getsourcefilesource(frame)
+        assert source
 
-        start_lineno = lineno + 1
-        end_lineno = start_lineno
+        module = cst.parse_module(source)
+        wrapper = cst.MetadataWrapper(module, unsafe_skip_copy=True)
 
-        parent_level = indent_level(lines[lineno - 1])
+        m = libcst.matchers
+        match_start_line = m.MatchMetadataIfTrue(
+            PositionProvider, lambda position: position.start.line == frame.f_lineno
+        )
+        pattern = m.With(metadata=match_start_line)
+        matches = m.findall(wrapper, pattern)
 
-        while end_lineno + 1 < len(lines):
-            line = lines[end_lineno]
-            if is_source_line(line) and indent_level(line) <= parent_level:
-                break
-            end_lineno += 1
-
-        block_lines = lines[start_lineno - 1 : end_lineno]
-        block_source = unindent_source("\n".join(block_lines))
-        # Remove trailing blank lines
-        block_source = block_source.rstrip()
+        with_stmt = ensure_type(one(matches), cst.With)
+        block_source = module.code_for_node(with_stmt.body)
 
         # Setup skip-context hack
         sys.settrace(noop)
         sys._getframe(1).f_trace = raiser(SkipContext)
 
-        return block_source
+        try:
+            return unindent_source(block_source)
+
+        except OutdentedCommentError:
+            raise ValueError(
+                "the block in the body of literal_block() should not contain outdented comments"
+            ) from None
 
     def __exit__(
         self,
