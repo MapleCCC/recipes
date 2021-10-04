@@ -74,7 +74,10 @@ def bind_arguments(
 def get_frame_curr_line(frame: FrameType) -> Optional[str]:
     """Get the current executing source line of a given frame, or None if not found"""
 
-    try:
-        return inspect.getsource(frame).splitlines()[frame.f_lineno - 1]
-    except OSError:
+    frame_info = inspect.getframeinfo(frame, context=1)
+    context = frame_info.code_context
+    if context is None:
         return None
+    line = one(context)
+
+    return line
