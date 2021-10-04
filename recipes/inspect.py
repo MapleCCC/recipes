@@ -12,7 +12,12 @@ from typing_extensions import ParamSpec
 from .builtins import ensure_type, read_text
 
 
-__all__ = ["get_function_body_source", "bind_arguments", "get_frame_curr_line"]
+__all__ = [
+    "getsourcefilesource",
+    "get_function_body_source",
+    "bind_arguments",
+    "get_frame_curr_line",
+]
 
 
 P = ParamSpec("P")
