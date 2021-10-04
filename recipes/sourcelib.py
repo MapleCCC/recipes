@@ -47,7 +47,10 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
             if reflow_comments:
                 new_lines.append(line.lstrip())
 
-            elif indent_level(line) < margin:
+            elif indent_level(line) >= margin:
+                new_lines.append(line[margin:])
+
+            else:
                 raise ValueError("can't unindent source code with outdented comments")
 
     return "\n".join(new_lines)
