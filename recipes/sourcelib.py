@@ -1,3 +1,5 @@
+from more_itertools import one
+
 from .exceptions import Unreachable
 
 
@@ -35,7 +37,8 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
     such that they are justified to match the level of their surrounding blocks.
     """
 
-    lines = text.splitlines()
+    # Set keepends to True to retain newlines for later assembly
+    lines = text.splitlines(keepends=True)
     if not lines:
         return text
 
@@ -47,8 +50,14 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
 
     for line in lines:
 
-        if is_source_line(line) or is_blank_line(line):
+        if is_source_line(line):
             new_lines.append(line[margin:])
+
+        elif is_blank_line(line):
+            line_content = one(line.splitlines())
+            newline = line.removeprefix(line_content)
+
+            new_lines.append(line_content[margin:] + newline)
 
         elif is_comment_line(line):
             if reflow_comments:
@@ -64,4 +73,4 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
         else:
             raise Unreachable
 
-    return "\n".join(new_lines)
+    return "".join(new_lines)
