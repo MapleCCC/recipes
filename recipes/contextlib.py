@@ -147,7 +147,5 @@ class literal_block(AbstractContextManager[str]):
         traceback: TracebackType,
     ) -> bool:
 
-        if isinstance(exc_value, SkipContext):
-            return True
-        else:
-            return False
+        # Suppress the SkipContext exception
+        return isinstance(exc_value, SkipContext)
