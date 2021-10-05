@@ -1,4 +1,4 @@
-__all__ = ["line_boundaries"]
+__all__ = ["line_boundaries", "remove_leading_newline"]
 
 
 # A collection of strings considered line boundaries
@@ -20,3 +20,13 @@ line_boundaries = frozenset(
         "\u2029",
     ]
 )
+
+
+def remove_leading_newline(string: str) -> str:
+    """Remove the leading newline"""
+
+    for newline in sorted(line_boundaries, key=len, reverse=True):
+        if string.startswith(newline):
+            return string.removeprefix(newline)
+
+    return string

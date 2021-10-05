@@ -14,6 +14,7 @@ from .builtins import ensure_type
 from .functools import noop, raiser
 from .inspect import getcallerframe, getsourcefilesource
 from .sourcelib import OutdentedCommentError, unindent_source
+from .string import remove_leading_newline
 
 
 __all__ = ["mock_globals", "contextmanagerclass", "skip_context", "literal_block"]
@@ -133,6 +134,9 @@ class literal_block(AbstractContextManager[str]):
 
         with_stmt = ensure_type(one(matches), cst.With)
         block_source = module.code_for_node(with_stmt.body)
+
+        # Remove the newline after the colon
+        block_source = remove_leading_newline(block_source)
 
         # Setup skip-context hack
         sys.settrace(noop)
