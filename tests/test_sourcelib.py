@@ -1,6 +1,7 @@
 import pytest
 
-from recipes.sourcelib import OutdentedCommentError, unindent_source
+from recipes.exceptions import OutdentedCommentError
+from recipes.sourcelib import unindent_source
 
 
 class TestUnindentSource:

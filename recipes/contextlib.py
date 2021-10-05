@@ -11,9 +11,10 @@ from more_itertools import one
 from typing_extensions import ParamSpec
 
 from .builtins import ensure_type
+from .exceptions import OutdentedCommentError
 from .functools import noop, raiser
 from .inspect import getcallerframe, getsourcefilesource
-from .sourcelib import OutdentedCommentError, unindent_source
+from .sourcelib import unindent_source
 from .string import remove_leading_newline
 
 

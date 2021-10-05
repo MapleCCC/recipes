@@ -1,9 +1,9 @@
 from more_itertools import one
 
-from .exceptions import Unreachable
+from .exceptions import OutdentedCommentError, Unreachable
 
 
-__all__ = ["OutdentedCommentError", "unindent_source"]
+__all__ = ["unindent_source"]
 
 
 def is_blank_line(line: str) -> bool:
@@ -22,10 +22,6 @@ def indent_level(line: str) -> int:
     """Get the indentation level of given line"""
 
     return len(line) - len(line.lstrip())
-
-
-class OutdentedCommentError(Exception):
-    "Raised when `unindent_source()` encounters outdented comments"
 
 
 def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
