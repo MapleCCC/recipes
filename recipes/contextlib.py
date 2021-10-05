@@ -11,6 +11,7 @@ from more_itertools import one
 from typing_extensions import ParamSpec
 
 from .builtins import ensure_type
+from .cst import contains_outdented_comment
 from .exceptions import OutdentedCommentError
 from .functools import noop, raiser
 from .inspect import getcallerframe, getsourcefilesource
@@ -134,6 +135,14 @@ class literal_block(AbstractContextManager[str]):
         matches = m.findall(wrapper, pattern)
 
         with_stmt = ensure_type(one(matches), cst.With)
+
+        # Detect outdented comments before calling libcst.Module.code/code_for_node()
+        # because the result is buggy when outdented comments are present.
+        if contains_outdented_comment(with_stmt):
+            raise OutdentedCommentError(
+                "the block in the body of literal_block() should not contain outdented comments"
+            )
+
         block_source = module.code_for_node(with_stmt.body)
 
         # Remove the newline after the colon
@@ -143,13 +152,7 @@ class literal_block(AbstractContextManager[str]):
         sys.settrace(noop)
         sys._getframe(1).f_trace = raiser(SkipContext)
 
-        try:
-            return unindent_source(block_source)
-
-        except OutdentedCommentError:
-            raise ValueError(
-                "the block in the body of literal_block() should not contain outdented comments"
-            ) from None
+        return unindent_source(block_source)
 
     def __exit__(
         self,
