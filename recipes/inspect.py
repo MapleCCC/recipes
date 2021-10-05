@@ -11,6 +11,10 @@ from more_itertools import one
 from typing_extensions import ParamSpec
 
 from .builtins import ensure_type, read_text
+from .cst import contains_outdented_comment
+from .exceptions import OutdentedCommentError
+from .sourcelib import unindent_source
+from .string import remove_leading_newline
 
 
 __all__ = [
@@ -36,7 +40,6 @@ def getsourcefilesource(obj: object) -> Optional[str]:
 
 
 # TODO in an ideal world, we should annotate the parameter as of type `Union[FunctionType, LambdaType, MethodType]`
-# FIXME should not tamper with the outdented comments in the functin body source code.
 def get_function_body_source(func: Callable) -> Optional[str]:
     """
     Return source code of the body of the function, or None if not found.
@@ -62,9 +65,21 @@ def get_function_body_source(func: Callable) -> Optional[str]:
     matches = m.findall(wrapper, pattern)
 
     funcdef = ensure_type(one(matches), (cst.FunctionDef, cst.Lambda))
-    body_source = module.code_for_node(funcdef.body)
+    funcbody = funcdef.body
 
-    return body_source
+    # Detect outdented comments before calling libcst.Module.code/code_for_node() whose
+    # result is buggy when outdented comments are present.
+    if contains_outdented_comment(funcbody):
+        raise OutdentedCommentError(
+            "get_function_body_source() expects no outdented comments in the body of the function"
+        )
+
+    body_source = module.code_for_node(funcbody)
+
+    # Remove the newline following the colon
+    body_source = remove_leading_newline(body_source)
+
+    return unindent_source(body_source)
 
 
 # TODO Any vs object
