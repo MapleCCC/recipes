@@ -2,8 +2,8 @@ import re
 
 import pytest
 
-from recipes.inspect import get_function_body_source
 from recipes.exceptions import OutdentedCommentError
+from recipes.inspect import get_function_body_source
 
 
 class TestGetFunctionBodySource:

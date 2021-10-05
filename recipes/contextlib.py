@@ -135,17 +135,18 @@ class literal_block(AbstractContextManager[str]):
         matches = m.findall(wrapper, pattern)
 
         with_stmt = ensure_type(one(matches), cst.With)
+        with_stmt_body = with_stmt.body
 
         # Detect outdented comments before calling libcst.Module.code/code_for_node()
-        # because the result is buggy when outdented comments are present.
-        if contains_outdented_comment(with_stmt):
+        # whose result is buggy when outdented comments are present.
+        if contains_outdented_comment(with_stmt_body):
             raise OutdentedCommentError(
                 "the block in the body of literal_block() should not contain outdented comments"
             )
 
-        block_source = module.code_for_node(with_stmt.body)
+        block_source = module.code_for_node(with_stmt_body)
 
-        # Remove the newline after the colon
+        # Remove the newline following the colon
         block_source = remove_leading_newline(block_source)
 
         # Setup skip-context hack

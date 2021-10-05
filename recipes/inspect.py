@@ -44,6 +44,7 @@ def get_function_body_source(func: Callable) -> Optional[str]:
     """
     Return source code of the body of the function, or None if not found.
     Raise TypeError if the function is built-in.
+    Raise OutdentedCommentError if the function body contains outdented comments.
     """
 
     if not isinstance(func, (FunctionType, LambdaType, MethodType)):
@@ -87,11 +88,13 @@ def get_function_body_source(func: Callable) -> Optional[str]:
 def bind_arguments(
     func: Callable[P, Any], *args: P.args, **kwargs: P.kwargs
 ) -> dict[str, Any]:
+
     """Bind arguments to function parameters, return the bound arguments as a dict"""
 
     signature = inspect.signature(func)
     bound_arguments = signature.bind(*args, **kwargs)
     bound_arguments.apply_defaults()
+
     return bound_arguments.arguments
 
 
