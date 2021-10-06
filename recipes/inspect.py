@@ -46,14 +46,15 @@ def get_function_body_source(
     """
     Return source code of the body of the function, or None if not found.
 
-    Raise ValueError if the argument is not a user-defined function.
-    Raise OutdentedCommentError if the function body contains outdented comments.
+    Raise `ValueError` if the argument is not a user-defined function. Raise
+    `OutdentedCommentError` if the function body contains outdented comments.
 
     For advanced usage, a custom hook `transform_body` is provided to customize
     and transform the concrete syntax tree node of the function body, before it's
     serialized to a source string.
     """
 
+    # Equivalent to `inspect.isfunction(func) or inspect.ismethod(func)`
     if not isinstance(func, (FunctionType, LambdaType, MethodType)):
         raise ValueError(f"expect a user-defined function, got {func}")
 

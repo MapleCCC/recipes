@@ -1,10 +1,9 @@
-import ast
 import inspect
 import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
 from inspect import Parameter
-from types import FrameType, FunctionType, TracebackType
+from types import FunctionType, TracebackType
 from typing import Any, TypeVar, Union, overload
 
 import libcst as cst
@@ -13,7 +12,6 @@ from libcst.metadata import PositionProvider
 from more_itertools import one
 from typing_extensions import ParamSpec
 
-from .ast import transform_source
 from .builtins import ensure_type
 from .cst import contains_outdented_comment
 from .exceptions import OutdentedCommentError
@@ -106,6 +104,10 @@ def skip_context() -> Generator[None, None, None]:
 
 
 class literal_block_context(AbstractContextManager[str]):
+    """
+    Return a context manager that returns the source code of the block in its body from
+    `__enter__`, and not execute the code.
+    """
 
     def __enter__(self) -> str:
 
@@ -169,8 +171,12 @@ def literal_block(func: Callable) -> str:
 def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[str]]:
     """
     Transform a block of code to literal string, and not execute the code. This utility
-    is useful for writing source code in literal string, and get syntax highlighting
-    when viewed in editor.
+    is useful for writing source code in the form of literal string, while getting
+    syntax highlighting viewed in editor.
+
+    Raise `ValueError` if the decorated function is not a user-defined function. Raise
+    `OutdentedCommentError` if the body of the decorated function contains outdented
+    comments. Raise `NameError` if a replacement field finds no replacement.
 
     Usage:
 
@@ -212,7 +218,7 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
         ```
 
         The parameter's default value is treated as fall-back value for the replacement
-        field, when the name lookup fails in the environment where the decoration
+        field when the name lookup fails in the environment where the decoration
         happens.
 
         ```
@@ -263,14 +269,14 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
             "@literal_block expects no outdented comments in the body of the decorated function"
         ) from None
 
-    substs: dict[str, Any] = {}
+    repls: dict[str, Any] = {}
     for name, param in signature.parameters.items():
         try:
             frame = getcallerframe()
-            substs[name] = eval(name, frame.f_globals, frame.f_locals)
+            repls[name] = eval(name, frame.f_globals, frame.f_locals)
         except NameError:
             if param.default is Parameter.empty:
                 raise NameError(f"{name} has no replacement found") from None
-            substs[name] = param.default
+            repls[name] = param.default
 
-    return body_source.format_map(substs)
+    return body_source.format_map(repls)

@@ -75,9 +75,7 @@ class TestLiteralBlock:
 
         with pytest.raises(
             OutdentedCommentError,
-            match=re.escape(
-                "@literal_block expects no outdented comments in the body of the decorated function"
-            ),
+            match= "@literal_block expects no outdented comments in the body of the decorated function"
         ):
 
             @literal_block

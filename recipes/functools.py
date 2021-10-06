@@ -16,11 +16,13 @@ R = TypeVar("R")
 
 
 def noop(*_, **__) -> None:
-    """An no-op function"""
+    """A no-op function"""
 
 
 def raiser(etype: type[BaseException]) -> Callable[..., NoReturn]:
-    """Create a function that raise specific exception regardless of the arguments"""
+    """
+    Create a function that raises the specific exception regardless of the arguments.
+    """
 
     def func(*_, **__):
         raise etype
