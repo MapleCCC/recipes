@@ -65,7 +65,7 @@ class TestGetFunctionBodySource:
             def leave_Integer(
                 self, original_node: cst.Integer, updated_node: cst.Integer
             ) -> cst.Integer:
-                new_integer = str(original_node.evaluated_value + 1)
+                new_integer = str(updated_node.evaluated_value + 1)
                 return updated_node.with_changes(value=new_integer)
 
         assert (
