@@ -43,7 +43,7 @@ def getsourcefilesource(obj: object) -> Optional[str]:
 def get_function_body_source(func: Callable) -> Optional[str]:
     """
     Return source code of the body of the function, or None if not found.
-    Raise TypeError if the function is built-in.
+    Raise ValueError if the argument is not a user-defined function.
     Raise OutdentedCommentError if the function body contains outdented comments.
     """
 
