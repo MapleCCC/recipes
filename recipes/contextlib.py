@@ -243,21 +243,18 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
             "the function decorated by @literal_block should only have postional-or-keyword parameters"
         )
 
-    class SurroundReplacementFieldsWithCurlyBraces(cst.CSTTransformer):
-        def __init__(self, replacement_fields: set[str]) -> None:
-            self.replacement_fields = replacement_fields
+    m = libcst.matchers
 
-        def leave_Name(
+    class SurroundReplacementFieldsWithCurlyBraces(m.MatcherDecoratableTransformer):
+
+        @m.leave(m.Name(m.OneOf(*signature.parameters)))
+        def surround_with_curly_braces(
             self, original_node: cst.Name, updated_node: cst.Name
-        ) -> Union[cst.Name, cst.Set]:
-            if updated_node.value in self.replacement_fields:
-                return cst.Set([cst.Element(updated_node)])
-            else:
-                return updated_node
+        ) -> cst.Set:
+            return cst.Set([cst.Element(updated_node)])
 
-    replacement_fields = set(signature.parameters)
-    transformer = SurroundReplacementFieldsWithCurlyBraces(replacement_fields)
     try:
+        transformer = SurroundReplacementFieldsWithCurlyBraces()
         body_source = get_function_body_source(func, transform_body=transformer)
         assert body_source
 
