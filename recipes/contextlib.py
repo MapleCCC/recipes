@@ -1,8 +1,11 @@
+import ast
+import inspect
 import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
-from types import TracebackType
-from typing import TypeVar
+from inspect import Parameter
+from types import FunctionType, TracebackType
+from typing import Any, TypeVar, Union, overload
 
 import libcst as cst
 import libcst.matchers
@@ -10,11 +13,12 @@ from libcst.metadata import PositionProvider
 from more_itertools import one
 from typing_extensions import ParamSpec
 
+from .ast import transform_source
 from .builtins import ensure_type
 from .cst import contains_outdented_comment
 from .exceptions import OutdentedCommentError
 from .functools import noop, raiser
-from .inspect import getcallerframe, getsourcefilesource
+from .inspect import get_function_body_source, getcallerframe, getsourcefilesource
 from .sourcelib import unindent_source
 from .string import remove_leading_newline
 
@@ -101,21 +105,7 @@ def skip_context() -> Generator[None, None, None]:
         pass
 
 
-class literal_block(AbstractContextManager[str]):
-    """
-    Transform a block of code to literal string, and not execute the code. This utility
-    is useful for writing source code in literal string, and get syntax highlighting
-    when viewed in editor.
-
-    Usage:
-    ```
-    with literal_block() as source:
-        a = 1
-        b = 2
-
-    print(source)  # "a = 1\\nb = 2"
-    ```
-    """
+class literal_block_context(AbstractContextManager[str]):
 
     def __enter__(self) -> str:
 
@@ -164,3 +154,136 @@ class literal_block(AbstractContextManager[str]):
 
         # Suppress the SkipContext exception
         return isinstance(exc_value, SkipContext)
+
+
+class Format(ast.NodeTransformer):
+    """
+    An ast node transformer to transform the abstract syntax tree such that names are
+    replaced with formatted strings.
+
+    The `substitutions` parameter accepts a mapping object containing replacements.
+    """
+
+    def __init__(self, substitutions: dict[str, Any]) -> None:
+        super().__init__()
+        self.substs = substitutions
+
+    def visit_Name(self, node: ast.Name) -> Union[ast.Name, ast.Constant]:
+
+        id, ctx = node.id, node.ctx
+
+        if id not in self.substs:
+            return node
+
+        if not isinstance(ctx, ast.Load):
+            raise ValueError("the name to replace is expected to be in load context")
+
+        formatted = format(self.substs[id])
+        return ast.Constant(value=formatted)
+
+
+def literal_block_decorator(func: FunctionType) -> str:
+
+    signature = inspect.signature(func)
+
+    if not all(
+        param.kind is Parameter.POSITIONAL_OR_KEYWORD
+        for param in signature.parameters.values()
+    ):
+        raise ValueError(
+            "the function decorated by @literal_block should only have postional-or-keyword parameters"
+        )
+
+    substs: dict[str, Any] = {}
+    for name, param in signature.parameters.items():
+        try:
+            frame = getcallerframe()
+            substs[name] = eval(name, frame.f_globals, frame.f_locals)
+        except NameError:
+            if param.default is Parameter.empty:
+                raise TypeError(f"{name} has no replacement found") from None
+            substs[name] = param.default
+
+    source = unindent_source(inspect.getsource(func))
+    # FIXME transform_source() relies on ast.parse/unparse, which doesn't preserve all details of the source code
+    # FIXME ast.unparse() implicitly converts double quotes to single quotes
+    new_source = transform_source(Format(substs), source)
+
+    return unindent_source(get_function_body_source(new_source))
+
+
+@overload
+def literal_block() -> AbstractContextManager[str]:
+    ...
+
+
+@overload
+def literal_block(func: Callable) -> str:
+    ...
+
+
+def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[str]]:
+    """
+    Transform a block of code to literal string, and not execute the code. This utility
+    is useful for writing source code in literal string, and get syntax highlighting
+    when viewed in editor.
+
+    Usage:
+
+    1. Used as a context manager:
+
+        ```
+        with literal_block() as source:
+            a = 1
+            b = 2
+
+        print(source)  # "a = 1\\nb = 2"
+        ```
+
+    2. Used as a decorator:
+
+        ```
+        @literal_block
+        def source():
+            a = 1
+            b = 2
+
+        print(source)  # "a = 1\\nb = 2"
+        ```
+
+        The decorated function's parameters are treated as replacement field names,
+        whose occurrences in the body of the decorated function are replaced by the
+        formatted values of variables with the same names, looked up in the environment
+        where the decoration happens. The behavior is similar to that of [formatted string literals](https://docs.python.org/3.9/reference/lexical_analysis.html#f-strings).
+
+        ```
+        c = 3
+
+        @literal_block
+        def source(c):
+            a = 1
+            b = c
+
+        print(source)  # 'a = 1\\nb = "3"'
+        ```
+
+        The parameter's default value is treated as fall-back value for the replacement
+        field, when the name lookup fails in the environment where the decoration
+        happens.
+
+        ```
+        @literal_block
+        def source(d = 4):
+            a = 1
+            b = d
+
+        print(source)  # 'a = 1\\nb = "4"'
+        ```
+    """
+
+    # TODO maybe we can merge parts of the impl of decorator and context
+
+    if func:
+        return literal_block_decorator(func)
+    else:
+        return literal_block_context()
