@@ -182,38 +182,6 @@ class Format(ast.NodeTransformer):
         return ast.Constant(value=formatted)
 
 
-def literal_block_decorator(func: FunctionType, user_frame: FrameType = None) -> str:
-
-    signature = inspect.signature(func)
-
-    if not all(
-        param.kind is Parameter.POSITIONAL_OR_KEYWORD
-        for param in signature.parameters.values()
-    ):
-        raise ValueError(
-            "the function decorated by @literal_block should only have postional-or-keyword parameters"
-        )
-
-    if not user_frame:
-        user_frame = getcallerframe()
-
-    substs: dict[str, Any] = {}
-    for name, param in signature.parameters.items():
-        try:
-            substs[name] = eval(name, user_frame.f_globals, user_frame.f_locals)
-        except NameError:
-            if param.default is Parameter.empty:
-                raise TypeError(f"{name} has no replacement found") from None
-            substs[name] = param.default
-
-    source = unindent_source(inspect.getsource(func))
-    # FIXME transform_source() relies on ast.parse/unparse, which doesn't preserve all details of the source code
-    # FIXME ast.unparse() implicitly converts double quotes to single quotes
-    new_source = transform_source(Format(substs), source)
-
-    return unindent_source(get_function_body_source(new_source))
-
-
 @overload
 def literal_block() -> AbstractContextManager[str]:
     ...
@@ -285,7 +253,32 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
 
     # TODO maybe we can merge parts of the impl of decorator and context
 
-    if func:
-        return literal_block_decorator(func, user_frame=getcallerframe())
-    else:
+    if not func:
         return literal_block_context()
+
+    signature = inspect.signature(func)
+
+    if not all(
+        param.kind is Parameter.POSITIONAL_OR_KEYWORD
+        for param in signature.parameters.values()
+    ):
+        raise ValueError(
+            "the function decorated by @literal_block should only have postional-or-keyword parameters"
+        )
+
+    substs: dict[str, Any] = {}
+    for name, param in signature.parameters.items():
+        try:
+            frame = getcallerframe()
+            substs[name] = eval(name, frame.f_globals, frame.f_locals)
+        except NameError:
+            if param.default is Parameter.empty:
+                raise TypeError(f"{name} has no replacement found") from None
+            substs[name] = param.default
+
+    source = unindent_source(inspect.getsource(func))
+    # FIXME transform_source() relies on ast.parse/unparse, which doesn't preserve all details of the source code
+    # FIXME ast.unparse() implicitly converts double quotes to single quotes
+    new_source = transform_source(Format(substs), source)
+
+    return unindent_source(get_function_body_source(new_source))
