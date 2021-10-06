@@ -5,11 +5,20 @@ import libcst as cst
 import pytest
 
 from recipes.exceptions import OutdentedCommentError
+from recipes.functools import nulldecorator
 from recipes.inspect import get_function_body_source
 
 
 class TestGetFunctionBodySource:
     def test_normal_case(self) -> None:
+        def f():
+            a = 1
+            b = 2
+
+        assert get_function_body_source(f) == "a = 1\nb = 2\n"
+
+    def test_decorated_function(self) -> None:
+        @nulldecorator
         def f():
             a = 1
             b = 2

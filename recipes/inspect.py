@@ -70,9 +70,13 @@ def get_function_body_source(
         PositionProvider,
         lambda position: position.start.line == func.__code__.co_firstlineno,
     )
-    pattern = (m.FunctionDef | m.Lambda)(metadata=match_start_line)
-    matches = m.findall(wrapper, pattern)
+    undeco_func_pattern = (m.FunctionDef | m.Lambda)(metadata=match_start_line)
+    deco_func_pattern = m.FunctionDef(
+        decorators=[m.Decorator(match_start_line), m.ZeroOrMore(m.Decorator())]
+    )
+    pattern = undeco_func_pattern | deco_func_pattern
 
+    matches = m.findall(wrapper, pattern)
     funcdef = ensure_type(one(matches), (cst.FunctionDef, cst.Lambda))
     funcbody = funcdef.body
 
