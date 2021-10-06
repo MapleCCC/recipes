@@ -17,7 +17,7 @@ def test_skip_context() -> None:
 class TestLiteralBlock:
     """Unit tests for `literal_block()`"""
 
-    def test_normal_case(self) -> None:
+    def test_context_manager(self) -> None:
 
         with literal_block() as source:
             a = 1
@@ -25,9 +25,36 @@ class TestLiteralBlock:
 
         assert source == "a = 1\nb = 2\n"
 
+    def test_decorator(self) -> None:
+        @literal_block
+        def source():
+            a = 1
+            b = 2
+
+        assert source == "a = 1\nb = 2\n"
+
+    def test_decorator_with_formatting(self) -> None:
+
+        c = 3
+
+        @literal_block
+        def source(c):
+            a = 1
+            b = c
+
+        assert source == "a = 1\nb = 3\n"
+
+    def test_decorator_with_formatting_and_fallback(self) -> None:
+        @literal_block
+        def source(d=4):
+            a = 1
+            b = d
+
+        assert source == "a = 1\nb = 4\n"
+
     # fmt: off
     # temporarily disable black formatter, so that we can test the case with outdented comments.
-    def test_wiht_outdented_comment(self) -> None:
+    def test_context_manager_with_outdented_comment(self) -> None:
 
         with pytest.raises(
             OutdentedCommentError,
@@ -37,6 +64,24 @@ class TestLiteralBlock:
         ):
 
             with literal_block() as source:
+                a = 1
+              # foo bar
+                b = 2
+    # fmt: on
+
+    # fmt: off
+    # temporarily disable black formatter, so that we can test the case with outdented comments.
+    def test_decorator_with_outdented_comment(self) -> None:
+
+        with pytest.raises(
+            OutdentedCommentError,
+            match=re.escape(
+                "@literal_block expects no outdented comments in the body of the decorated function"
+            ),
+        ):
+
+            @literal_block
+            def source():
                 a = 1
               # foo bar
                 b = 2
