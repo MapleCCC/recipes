@@ -1,4 +1,5 @@
 import re
+import sys
 
 import pytest
 
@@ -42,3 +43,14 @@ class TestGetFunctionBodySource:
         ):
             get_function_body_source(f)
     # fmt: on
+
+    def test_invalid_argument(self) -> None:
+
+        with pytest.raises(ValueError):
+            get_function_body_source(len)
+
+        with pytest.raises(ValueError):
+            get_function_body_source(sys.exit)
+
+        with pytest.raises(ValueError):
+            get_function_body_source(TestGetFunctionBodySource)
