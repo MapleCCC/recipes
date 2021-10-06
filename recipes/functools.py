@@ -54,7 +54,7 @@ def lazy_call(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     the return value is acutally used by external code.
     """
 
-    return cast(R, Proxy(partial(func, args, kwargs)))
+    return cast(R, Proxy(partial(func, *args, **kwargs)))
 
 
 def nulldecorator(func: Callable[P, R]) -> Callable[P, R]:
