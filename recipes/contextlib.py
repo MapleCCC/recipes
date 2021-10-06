@@ -230,6 +230,9 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
     if not func:
         return literal_block_context()
 
+    if not isinstance(func, FunctionType):
+        raise ValueError(f"expect a user-defined function, got {func}")
+
     signature = inspect.signature(func)
 
     if not all(
