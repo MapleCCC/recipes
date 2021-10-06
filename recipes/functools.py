@@ -8,7 +8,7 @@ from lazy_object_proxy import Proxy
 from typing_extensions import ParamSpec
 
 
-__all__ = ["noop", "raiser", "async_def", "lazy_call"]
+__all__ = ["noop", "raiser", "async_def", "lazy_call", "nulldecorator"]
 
 
 P = ParamSpec("P")
@@ -53,3 +53,9 @@ def lazy_call(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     """
 
     return cast(R, Proxy(partial(func, args, kwargs)))
+
+
+def nulldecorator(func: Callable[P, R]) -> Callable[P, R]:
+    """A null decorator, intended to be used as a stand-in for an optional decorator"""
+
+    return func
