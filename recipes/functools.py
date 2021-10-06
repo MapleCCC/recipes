@@ -1,12 +1,14 @@
 import inspect
 import types
 from collections.abc import Callable
-from typing import Awaitable, NoReturn, TypeVar
+from functools import partial
+from typing import Awaitable, NoReturn, TypeVar, cast
 
+from lazy_object_proxy import Proxy
 from typing_extensions import ParamSpec
 
 
-__all__ = ["noop", "raiser", "async_def"]
+__all__ = ["noop", "raiser", "async_def", "lazy_call"]
 
 
 P = ParamSpec("P")
@@ -34,3 +36,20 @@ def async_def(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     return types.FunctionType(
         new_code, func.__globals__, func.__name__, func.__defaults__, func.__closure__
     )
+
+
+# Although the return value is actually a Proxy instance, we type annotate it as R,
+# because we consider the main goal of type annotations as pragmatism and usefulness to
+# programmers. We consider type annotations to be a form of formal API documents, and
+# hence should convey the shape of the API as a black box viewed from outside, instead
+# of reflecting the API viewed from inside. We are good with and would like to trade
+# completeness for pragmatism.
+def lazy_call(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+    """
+    Call a function lazily.
+
+    The return value is lazily evaluated. The actual function execution is delayed until
+    the return value is acutally used by external code.
+    """
+
+    return cast(R, Proxy(partial(func, args, kwargs)))
