@@ -270,7 +270,7 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
             substs[name] = eval(name, frame.f_globals, frame.f_locals)
         except NameError:
             if param.default is Parameter.empty:
-                raise TypeError(f"{name} has no replacement found") from None
+                raise NameError(f"{name} has no replacement found") from None
             substs[name] = param.default
 
     return body_source.format_map(substs)
