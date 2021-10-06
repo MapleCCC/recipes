@@ -4,7 +4,7 @@ import sys
 from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
 from inspect import Parameter
-from types import FunctionType, TracebackType
+from types import FrameType, FunctionType, TracebackType
 from typing import Any, TypeVar, Union, overload
 
 import libcst as cst
@@ -182,7 +182,7 @@ class Format(ast.NodeTransformer):
         return ast.Constant(value=formatted)
 
 
-def literal_block_decorator(func: FunctionType) -> str:
+def literal_block_decorator(func: FunctionType, user_frame: FrameType = None) -> str:
 
     signature = inspect.signature(func)
 
@@ -194,11 +194,13 @@ def literal_block_decorator(func: FunctionType) -> str:
             "the function decorated by @literal_block should only have postional-or-keyword parameters"
         )
 
+    if not user_frame:
+        user_frame = getcallerframe()
+
     substs: dict[str, Any] = {}
     for name, param in signature.parameters.items():
         try:
-            frame = getcallerframe()
-            substs[name] = eval(name, frame.f_globals, frame.f_locals)
+            substs[name] = eval(name, user_frame.f_globals, user_frame.f_locals)
         except NameError:
             if param.default is Parameter.empty:
                 raise TypeError(f"{name} has no replacement found") from None
@@ -284,6 +286,6 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
     # TODO maybe we can merge parts of the impl of decorator and context
 
     if func:
-        return literal_block_decorator(func)
+        return literal_block_decorator(func, user_frame=getcallerframe())
     else:
         return literal_block_context()
