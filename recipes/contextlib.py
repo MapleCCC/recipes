@@ -156,32 +156,6 @@ class literal_block_context(AbstractContextManager[str]):
         return isinstance(exc_value, SkipContext)
 
 
-class Format(ast.NodeTransformer):
-    """
-    An ast node transformer to transform the abstract syntax tree such that names are
-    replaced with formatted strings.
-
-    The `substitutions` parameter accepts a mapping object containing replacements.
-    """
-
-    def __init__(self, substitutions: dict[str, Any]) -> None:
-        super().__init__()
-        self.substs = substitutions
-
-    def visit_Name(self, node: ast.Name) -> Union[ast.Name, ast.Constant]:
-
-        id, ctx = node.id, node.ctx
-
-        if id not in self.substs:
-            return node
-
-        if not isinstance(ctx, ast.Load):
-            raise ValueError("the name to replace is expected to be in load context")
-
-        formatted = format(self.substs[id])
-        return ast.Constant(value=formatted)
-
-
 @overload
 def literal_block() -> AbstractContextManager[str]:
     ...
@@ -266,6 +240,29 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
             "the function decorated by @literal_block should only have postional-or-keyword parameters"
         )
 
+    class SurroundReplacementFieldsWithCurlyBraces(cst.CSTTransformer):
+        def __init__(self, replacement_fields: set[str]) -> None:
+            self.replacement_fields = replacement_fields
+
+        def leave_Name(
+            self, original_node: cst.Name, updated_node: cst.Name
+        ) -> Union[cst.Name, cst.Set]:
+            if updated_node.value in self.replacement_fields:
+                return cst.Set([cst.Element(updated_node)])
+            else:
+                return updated_node
+
+    replacement_fields = set(signature.parameters)
+    transformer = SurroundReplacementFieldsWithCurlyBraces(replacement_fields)
+    try:
+        body_source = get_function_body_source(func, transform_body=transformer)
+        assert body_source
+
+    except OutdentedCommentError:
+        raise OutdentedCommentError(
+            "@literal_block expects no outdented comments in the body of the decorated function"
+        ) from None
+
     substs: dict[str, Any] = {}
     for name, param in signature.parameters.items():
         try:
@@ -276,9 +273,4 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
                 raise TypeError(f"{name} has no replacement found") from None
             substs[name] = param.default
 
-    source = unindent_source(inspect.getsource(func))
-    # FIXME transform_source() relies on ast.parse/unparse, which doesn't preserve all details of the source code
-    # FIXME ast.unparse() implicitly converts double quotes to single quotes
-    new_source = transform_source(Format(substs), source)
-
-    return unindent_source(get_function_body_source(new_source))
+    return body_source.format_map(substs)
