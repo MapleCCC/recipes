@@ -1,4 +1,5 @@
 import inspect
+import os.path
 import sys
 from collections.abc import Callable
 from types import FrameType, FunctionType, LambdaType, MethodType
@@ -29,25 +30,31 @@ __all__ = [
 P = ParamSpec("P")
 
 
-def getsourcefilesource(obj: object) -> Optional[str]:
+def getsourcefilesource(obj: object) -> str:
     """
-    Return source code of the Python source file where the object is defined, or None if
-    not found. Raise TypeError if the object is a built-in module, class or function.
+    Return source code of the Python source file where the object is defined.
+    Raise TypeError if the object is a built-in module, class or function.
+    Raise OSError if the source code can't be retrieved.
     """
 
     sourcefile = inspect.getsourcefile(obj)
-    return read_text(sourcefile) if sourcefile else None
+    if sourcefile is None or not os.path.exists(sourcefile):
+        raise OSError(
+            f"can't retrieve source code of the source file where {obj} is defined"
+        )
+    return read_text(sourcefile)
 
 
 # TODO in an ideal world, we should annotate the parameter `func` as of type `Union[FunctionType, LambdaType, MethodType]`
 def get_function_body_source(
     func: Callable, *, transform_body: cst.CSTTransformer = None
-) -> Optional[str]:
+) -> str:
     """
-    Return source code of the body of the function, or None if not found.
+    Return source code of the body of the function.
 
-    Raise `ValueError` if the argument is not a user-defined function. Raise
-    `OutdentedCommentError` if the function body contains outdented comments.
+    Raise `ValueError` if the argument is not a user-defined function. Raise `OSError`
+    if the source code can't be retrieved. Raise `OutdentedCommentError` if the function
+    body contains outdented comments.
 
     For advanced usage, a custom hook `transform_body` is provided to customize
     and transform the concrete syntax tree node of the function body, before it's
@@ -59,8 +66,6 @@ def get_function_body_source(
         raise ValueError(f"expect a user-defined function, got {func}")
 
     source = getsourcefilesource(func)
-    if source is None:
-        return None
 
     module = cst.parse_module(source)
     wrapper = cst.MetadataWrapper(module, unsafe_skip_copy=True)

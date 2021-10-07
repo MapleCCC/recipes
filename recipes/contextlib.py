@@ -262,7 +262,6 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
     try:
         transformer = SurroundReplacementFieldsWithCurlyBraces()
         body_source = get_function_body_source(func, transform_body=transformer)
-        assert body_source
 
     except OutdentedCommentError:
         raise OutdentedCommentError(
