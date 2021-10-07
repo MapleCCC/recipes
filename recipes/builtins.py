@@ -42,7 +42,7 @@ def hashable(obj: object, /) -> bool:
 
 
 def append(seq: MutableSequence[T], elem: T) -> int:
-    """Append an element to a sequence, and return the new length of the sequence."""
+    """Append an element to a sequence, and return the insertion index."""
 
     seq.append(elem)
     return len(seq) - 1
