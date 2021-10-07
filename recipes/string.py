@@ -1,4 +1,4 @@
-__all__ = ["line_boundaries", "remove_leading_newline"]
+__all__ = ["line_boundaries"]
 
 
 # A collection of strings considered line boundaries
@@ -18,14 +18,3 @@ line_boundaries = [
     "\u2028",
     "\u2029",
 ]
-
-
-def remove_leading_newline(string: str) -> str:
-    """Remove the leading newline"""
-
-    # Match from the longer to shorter, because overlap exists.
-    for newline in sorted(line_boundaries, key=len, reverse=True):
-        if string.startswith(newline):
-            return string.removeprefix(newline)
-
-    return string
