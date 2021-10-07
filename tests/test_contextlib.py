@@ -26,6 +26,9 @@ class TestLiteralBlock:
 
         assert source == "a = 1\nb = 2\n"
 
+        with pytest.raises(NameError):
+            _ = a
+
     def test_decorator(self) -> None:
         @literal_block
         def source():
@@ -33,6 +36,9 @@ class TestLiteralBlock:
             b = 2
 
         assert source == "a = 1\nb = 2\n"
+
+        with pytest.raises(NameError):
+            _ = a
 
     def test_decorator_with_formatting(self) -> None:
 
@@ -45,6 +51,9 @@ class TestLiteralBlock:
 
         assert source == "a = 1\nb = 3\n"
 
+        with pytest.raises(NameError):
+            _ = a
+
     def test_decorator_with_formatting_and_fallback(self) -> None:
         @literal_block
         def source(d=4):
@@ -52,6 +61,9 @@ class TestLiteralBlock:
             b = d
 
         assert source == "a = 1\nb = 4\n"
+
+        with pytest.raises(NameError):
+            _ = a
 
     def test_invalid_argument(self) -> None:
 
