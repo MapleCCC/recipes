@@ -15,7 +15,6 @@ from .builtins import ensure_type, read_text
 from .cst import contains_outdented_comment
 from .exceptions import OutdentedCommentError
 from .sourcelib import unindent_source
-from .string import remove_leading_newline
 
 
 __all__ = [
@@ -98,8 +97,9 @@ def get_function_body_source(
 
     body_source = module.code_for_node(funcbody)
 
-    # Remove the newline following the colon
-    body_source = remove_leading_newline(body_source)
+    if isinstance(funcbody, cst.IndentedBlock):
+        # Remove the header following the colon
+        body_source = "".join(body_source.splitlines(keepends=True)[1:])
 
     return unindent_source(body_source)
 

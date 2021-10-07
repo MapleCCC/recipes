@@ -18,7 +18,6 @@ from .exceptions import OutdentedCommentError
 from .functools import noop, raiser
 from .inspect import get_function_body_source, getcallerframe, getsourcefilesource
 from .sourcelib import unindent_source
-from .string import remove_leading_newline
 
 
 __all__ = ["mock_globals", "contextmanagerclass", "skip_context", "literal_block"]
@@ -138,8 +137,9 @@ class literal_block_context(AbstractContextManager[str]):
 
         block_source = module.code_for_node(with_stmt_body)
 
-        # Remove the newline following the colon
-        block_source = remove_leading_newline(block_source)
+        if isinstance(with_stmt_body, cst.IndentedBlock):
+            # Remove the header following the colon
+            block_source = "".join(block_source.splitlines(keepends=True)[1:])
 
         # Setup skip-context hack
         sys.settrace(noop)
