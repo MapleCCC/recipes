@@ -1,10 +1,8 @@
 import importlib
 import importlib.util
-from functools import partial
 from types import ModuleType
-from typing import cast
 
-from lazy_object_proxy import Proxy
+from .functools import lazy_call
 
 
 __all__ = ["importable", "lazy_import_module"]
@@ -18,8 +16,8 @@ def importable(module: str) -> bool:
     return importlib.util.find_spec(module) is not None
 
 
-def lazy_import_module(name: str, packge: str = None) -> ModuleType:
+# Refer to the comments of `lazy_call()` for explanation of the type annotation design.
+def lazy_import_module(name: str, package: str = None) -> ModuleType:
     """Lazy version of `importlib.import_module()`"""
 
-    lazy_module = Proxy(partial(importlib.import_module, name, packge))
-    return cast(ModuleType, lazy_module)
+    return lazy_call(importlib.import_module, name, package)
