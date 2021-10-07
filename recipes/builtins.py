@@ -18,6 +18,7 @@ __all__ = [
     "NO_ARGUMENT",
     "read_text",
     "write_text",
+    "ensure_type",
 ]
 
 

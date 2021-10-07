@@ -44,7 +44,9 @@ def getsourcefilesource(obj: object) -> str:
     return read_text(sourcefile)
 
 
-# TODO in an ideal world, we should annotate the parameter `func` as of type `Union[FunctionType, LambdaType, MethodType]`
+# TODO in an ideal world, we should annotate the parameter `func` as of type
+# `Union[FunctionType, LambdaType, MethodType]` to emphasize that it should be a
+# user-defined function, not some general callables.
 def get_function_body_source(
     func: Callable, *, transform_body: cst.CSTTransformer = None
 ) -> str:
@@ -60,7 +62,7 @@ def get_function_body_source(
     serialized to a source string.
     """
 
-    # Equivalent to `inspect.isfunction(func) or inspect.ismethod(func)`
+    # Equivalent to `if not (inspect.isfunction(func) or inspect.ismethod(func)):`
     if not isinstance(func, (FunctionType, LambdaType, MethodType)):
         raise ValueError(f"expect a user-defined function, got {func}")
 

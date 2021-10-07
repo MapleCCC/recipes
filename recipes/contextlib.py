@@ -168,6 +168,9 @@ def literal_block(func: Callable) -> str:
     ...
 
 
+# TODO in an ideal world, we should annotate the parameter `func` as of type
+# `FunctionType` to emphasize that it should be a user-defined function, not some
+# general callables.
 def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[str]]:
     """
     Transform a block of code to literal string, and not execute the code. This utility
@@ -269,11 +272,15 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
         ) from None
 
     repls: dict[str, Any] = {}
+
     for name, param in signature.parameters.items():
+
         try:
             frame = getcallerframe()
             repls[name] = eval(name, frame.f_globals, frame.f_locals)
+
         except NameError:
+
             if param.default is Parameter.empty:
                 raise NameError(f"{name} has no replacement found") from None
             repls[name] = param.default
