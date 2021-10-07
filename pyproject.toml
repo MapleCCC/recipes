@@ -2,3 +2,6 @@
 profile = "black"
 skip_gitignore = true
 lines_after_imports = 2
+
+[tool.coverage.report]
+exclude_lines = ["raise Unreachable"]
