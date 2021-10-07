@@ -13,6 +13,18 @@ class TestUnindentSource:
         source = "    a = 1\n        b = 2\n"
         assert unindent_source(source) == "a = 1\n    b = 2\n"
 
+    def test_empty_input(self) -> None:
+        source = "     "
+        assert unindent_source(source) == source
+        source = "     \n"
+        assert unindent_source(source) == source
+
+    def test_no_indentation(self) -> None:
+        source = "a = 1\nb = 2\n"
+        assert unindent_source(source) == source
+        source = "a = 1\n   b = 2\n"
+        assert unindent_source(source) == source
+
     def test_with_blank_line(self) -> None:
         source = "    a = 1\n    \n    b = 2\n"
         assert unindent_source(source) == "a = 1\n\nb = 2\n"

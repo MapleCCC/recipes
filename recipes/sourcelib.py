@@ -35,10 +35,9 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
 
     # Set keepends to True to retain newlines for later assembly
     lines = text.splitlines(keepends=True)
-    if not lines:
-        return text
 
-    margin = min(indent_level(line) for line in lines if is_source_line(line))
+    sourcelines = (line for line in lines if is_source_line(line))
+    margin = min((indent_level(line) for line in sourcelines), default=0)
     if not margin:
         return text
 
