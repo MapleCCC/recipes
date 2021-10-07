@@ -27,11 +27,11 @@ class TestUnindentSource:
 
     def test_with_blank_line(self) -> None:
         source = "    a = 1\n    \n    b = 2\n"
-        assert unindent_source(source) == "a = 1\n\nb = 2\n"
+        assert unindent_source(source) == "a = 1\n    \nb = 2\n"
         source = "    a = 1\n     \n    b = 2\n"
-        assert unindent_source(source) == "a = 1\n \nb = 2\n"
+        assert unindent_source(source) == "a = 1\n     \nb = 2\n"
         source = "    a = 1\n  \n    b = 2\n"
-        assert unindent_source(source) == "a = 1\n\nb = 2\n"
+        assert unindent_source(source) == "a = 1\n  \nb = 2\n"
 
     def test_with_comment(self) -> None:
         source = "    a = 1\n    # Foo bar\n    b = 2\n"
@@ -58,6 +58,6 @@ class TestUnindentSource:
         source = "    a = 1\r\n    b = 2\n"
         assert unindent_source(source) == "a = 1\r\nb = 2\n"
         source = "    a = 1\n    \r\n    b = 2\n"
-        assert unindent_source(source) == "a = 1\n\r\nb = 2\n"
+        assert unindent_source(source) == "a = 1\n    \r\nb = 2\n"
         source = "    a = 1\n  \r\n    b = 2\n"
-        assert unindent_source(source) == "a = 1\n\r\nb = 2\n"
+        assert unindent_source(source) == "a = 1\n  \r\nb = 2\n"

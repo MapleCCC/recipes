@@ -1,5 +1,3 @@
-from more_itertools import one
-
 from .exceptions import OutdentedCommentError, Unreachable
 
 
@@ -28,6 +26,8 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
     """
     Unindent the source code.
 
+    Blank lines are left intact.
+
     Outdented comments cause `OutdentedCommentError` to get raised. This could be
     mitigated by setting the `reflow_comments` parameter to `True`, to reflow comments
     such that they are justified to match the level of their surrounding blocks.
@@ -49,10 +49,7 @@ def unindent_source(text: str, *, reflow_comments: bool = False) -> str:
             new_lines.append(line[margin:])
 
         elif is_blank_line(line):
-            line_content = one(line.splitlines())
-            newline = line.removeprefix(line_content)
-
-            new_lines.append(line_content[margin:] + newline)
+            new_lines.append(line)
 
         elif is_comment_line(line):
             if reflow_comments:
