@@ -13,7 +13,7 @@ from more_itertools import one
 from typing_extensions import ParamSpec
 
 from .builtins import ensure_type
-from .cst import contains_outdented_comment
+from .cst import contains_outdented_comment, transform_source
 from .exceptions import OutdentedCommentError
 from .functools import noop, raiser
 from .inspect import get_function_body_source, getcallerframe, getsourcefilesource
@@ -252,6 +252,14 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
             "the function decorated by @literal_block should only have postional-or-keyword parameters"
         )
 
+    try:
+        body_source = get_function_body_source(func)
+
+    except OutdentedCommentError:
+        raise OutdentedCommentError(
+            "@literal_block expects no outdented comments in the body of the decorated function"
+        ) from None
+
     m = libcst.matchers
 
     class SurroundReplacementFieldsWithCurlyBraces(m.MatcherDecoratableTransformer):
@@ -262,14 +270,9 @@ def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[st
         ) -> cst.Set:
             return cst.Set([cst.Element(updated_node)])
 
-    try:
-        transformer = SurroundReplacementFieldsWithCurlyBraces()
-        body_source = get_function_body_source(func, transform_body=transformer)
+    transformer = SurroundReplacementFieldsWithCurlyBraces()
 
-    except OutdentedCommentError:
-        raise OutdentedCommentError(
-            "@literal_block expects no outdented comments in the body of the decorated function"
-        ) from None
+    body_source = transform_source(transformer, body_source)
 
     repls: dict[str, Any] = {}
 

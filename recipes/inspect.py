@@ -47,19 +47,13 @@ def getsourcefilesource(obj: object) -> str:
 # TODO in an ideal world, we should annotate the parameter `func` as of type
 # `Union[FunctionType, LambdaType, MethodType]` to emphasize that it should be a
 # user-defined function, not some general callables.
-def get_function_body_source(
-    func: Callable, *, transform_body: cst.CSTTransformer = None
-) -> str:
+def get_function_body_source(func: Callable) -> str:
     """
     Return source code of the body of the function.
 
     Raise `ValueError` if the argument is not a user-defined function. Raise `OSError`
     if the source code can't be retrieved. Raise `OutdentedCommentError` if the function
     body contains outdented comments.
-
-    For advanced usage, a custom hook `transform_body` is provided to customize
-    and transform the concrete syntax tree node of the function body, before it's
-    serialized to a source string.
     """
 
     # Equivalent to `if not (inspect.isfunction(func) or inspect.ismethod(func)):`
@@ -85,10 +79,6 @@ def get_function_body_source(
     matches = m.findall(wrapper, pattern)
     funcdef = ensure_type(one(matches), (cst.FunctionDef, cst.Lambda))
     funcbody = funcdef.body
-
-    # Apply the `transform_body` hook
-    if transform_body:
-        funcbody = ensure_type(funcbody.visit(transform_body), cst.CSTNode)
 
     # Detect outdented comments before calling libcst.Module.code/code_for_node() whose
     # result is buggy when outdented comments are present.

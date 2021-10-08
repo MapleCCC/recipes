@@ -1,7 +1,6 @@
 import re
 import sys
 
-import libcst as cst
 import pytest
 
 from recipes.exceptions import OutdentedCommentError
@@ -64,20 +63,3 @@ class TestGetFunctionBodySource:
 
         with pytest.raises(ValueError, match="expect a user-defined function"):
             get_function_body_source(TestGetFunctionBodySource)
-
-    def test_transform_body_hook(self) -> None:
-        def f():
-            a = 1
-            b = 2
-
-        class IncrementIntegerLiteral(cst.CSTTransformer):
-            def leave_Integer(
-                self, original_node: cst.Integer, updated_node: cst.Integer
-            ) -> cst.Integer:
-                new_integer = str(updated_node.evaluated_value + 1)
-                return updated_node.with_changes(value=new_integer)
-
-        assert (
-            get_function_body_source(f, transform_body=IncrementIntegerLiteral())
-            == "a = 2\nb = 3\n"
-        )
