@@ -3,17 +3,26 @@ from pathlib import Path
 
 from pathspec import PathSpec
 
+from .builtins import read_text
+from .exceptions import Unreachable
+
 
 __all__ = ["gitignore_aware_os_walk"]
 
 
-EmptyPathSpec = PathSpec([])
+def gitignore_aware_os_walk(path: Path, *, aggressive: bool = False) -> Iterator[Path]:
+    """
+    Walk the directory tree, and yield files not gitignored.
+
+    Setting the `aggressive` parameter to `True` to also ignore the `.git/` directory
+    and the `.gitignore` file.
+    """
+
+    return _gitignore_aware_os_walk(path, aggressive, PathSpec([]))
 
 
-def gitignore_aware_os_walk(
-    path: Path,
-    pathspec: PathSpec = EmptyPathSpec,
-    aggressive: bool = False,
+def _gitignore_aware_os_walk(
+    path: Path, aggressive: bool, pathspec: PathSpec
 ) -> Iterator[Path]:
 
     if not path.is_dir():
@@ -23,7 +32,7 @@ def gitignore_aware_os_walk(
 
     if local_gitignore.is_file():
 
-        lines = local_gitignore.read_text(encoding="utf-8").splitlines()
+        lines = read_text(local_gitignore).splitlines()
 
         if aggressive:
             lines.extend([".git/", ".gitignore"])
@@ -53,7 +62,7 @@ def gitignore_aware_os_walk(
             #     Source: https://git-scm.com/docs/gitignore#_pattern_format
 
             if not pathspec.match_file(str(child) + "/"):
-                yield from gitignore_aware_os_walk(child, pathspec, aggressive)
+                yield from _gitignore_aware_os_walk(child, aggressive, pathspec)
 
         else:
-            raise RuntimeError("Unexpected condition")
+            raise Unreachable
