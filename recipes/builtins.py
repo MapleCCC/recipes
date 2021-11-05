@@ -4,6 +4,7 @@ import sys
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, overload
 
+import cchardet
 import inflect
 
 
@@ -19,6 +20,7 @@ __all__ = [
     "read_text",
     "write_text",
     "ensure_type",
+    "try_decode",
 ]
 
 
@@ -142,3 +144,15 @@ def ensure_type(obj: object, typ: Union[type[T], tuple[type[T], ...]]) -> T:
         got = p.a(type(obj).__name__)
 
         raise TypeError(f"expect {expected}, but got {got} instead")
+
+
+def try_decode(blob: bytes) -> str:
+    """First try to decode with UTF-8, and fallback to use cchardet if fails"""
+
+    try:
+        return blob.decode(encoding="utf-8")
+
+    except UnicodeDecodeError:
+
+        detected_encoding = cchardet.detect(blob)["encoding"]
+        return blob.decode(detected_encoding)
