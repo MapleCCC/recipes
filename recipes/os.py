@@ -4,7 +4,6 @@ from pathlib import Path
 from pathspec import PathSpec
 
 from .builtins import read_text
-from .exceptions import Unreachable
 
 
 __all__ = ["gitignore_aware_os_walk"]
@@ -65,4 +64,4 @@ def _gitignore_aware_os_walk(
                 yield from _gitignore_aware_os_walk(child, aggressive, pathspec)
 
         else:
-            raise Unreachable
+            raise NotImplementedError("currently only regular files are supported")
