@@ -4,7 +4,6 @@ import sys
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, overload
 
-import cchardet
 import inflect
 
 
@@ -153,6 +152,8 @@ def try_decode(blob: bytes) -> str:
         return blob.decode(encoding="utf-8")
 
     except UnicodeDecodeError:
+
+        import cchardet
 
         detected_encoding = cchardet.detect(blob)["encoding"]
         return blob.decode(detected_encoding)
