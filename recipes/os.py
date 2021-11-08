@@ -17,7 +17,12 @@ def gitignore_aware_os_walk(path: Path, *, aggressive: bool = False) -> Iterator
     and the `.gitignore` file.
     """
 
-    return _gitignore_aware_os_walk(path, aggressive, PathSpec([]))
+    if aggressive:
+        pathspec = PathSpec.from_lines("gitwildmatch", [".git/", ".gitignore"])
+    else:
+        pathspec = PathSpec([])
+
+    return _gitignore_aware_os_walk(path, aggressive, pathspec)
 
 
 def _gitignore_aware_os_walk(
@@ -32,9 +37,6 @@ def _gitignore_aware_os_walk(
     if local_gitignore.is_file():
 
         lines = read_text(local_gitignore).splitlines()
-
-        if aggressive:
-            lines.extend([".git/", ".gitignore"])
 
         local_pathspec = PathSpec.from_lines("gitwildmatch", lines)
 
