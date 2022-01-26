@@ -15,6 +15,8 @@ __all__ = [
     "hashable",
     "append",
     "apply",
+    "getattr_r",
+    "setattr_r",
     "eval_in_caller_frame",
     "NO_ARGUMENT",
     "read_text",
@@ -54,6 +56,29 @@ def append(seq: MutableSequence[T], elem: T) -> int:
 def apply(func: Callable[[T], None], iterable: Iterable[T]) -> None:
     for elem in iterable:
         func(elem)
+
+
+# The `getattr_r` and `setattr_r` routines are intended as in-place replacements to the
+# builtin `getattr` and `setattr` routines. The new APIs are specifically designed to
+# make elegant the handling of boundary conditions / edge cases, and hence enhance code
+# writability & readability, and reduce code boilerplates.
+#
+# Possible usage:
+# `from recipes.builtins import getattr_r as getattr, setattr_r as setattr`
+
+
+NO_ATTR = object()  # A sentinel to denote the absence of an attribute
+
+
+def getattr_r(obj: object, attr: str) -> Any:
+    return getattr(obj, attr, NO_ATTR)
+
+
+def setattr_r(obj: object, attr: str, value: object) -> None:
+    if value is NO_ATTR:
+        delattr(obj, attr)
+    else:
+        setattr(obj, attr, value)
 
 
 # TODO deprecate
