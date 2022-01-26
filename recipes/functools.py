@@ -5,14 +5,23 @@ from functools import partial
 from typing import Awaitable, NoReturn, TypeVar, cast
 
 from lazy_object_proxy import Proxy
-from typing_extensions import ParamSpec
+from typing_extensions import Concatenate, ParamSpec
 
 
-__all__ = ["noop", "raiser", "async_def", "lazy_call", "nulldecorator"]
+__all__ = [
+    "noop",
+    "raiser",
+    "async_def",
+    "lazy_call",
+    "nulldecorator",
+    "inject_pre_hook",
+    "inject_post_hook",
+]
 
 
 P = ParamSpec("P")
 R = TypeVar("R")
+R2 = TypeVar("R2")
 
 
 def noop(*_, **__) -> None:
@@ -61,3 +70,25 @@ def nulldecorator(func: Callable[P, R]) -> Callable[P, R]:
     """A null decorator, intended to be used as a stand-in for an optional decorator"""
 
     return func
+
+
+def inject_pre_hook(prehook: Callable[P, None], func: Callable[P, R]) -> Callable[P, R]:
+    """Inject pre hook into a function"""
+
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        prehook(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def inject_post_hook(
+    posthook: Callable[Concatenate[R, P], R2], func: Callable[P, R]
+) -> Callable[P, R2]:
+    """Inject post hook into a function"""
+
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R2:
+        result = func(*args, **kwargs)
+        return posthook(result, *args, **kwargs)
+
+    return wrapper
