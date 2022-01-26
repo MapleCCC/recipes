@@ -1,7 +1,7 @@
 from __future__ import annotations  # for types imported from _typeshed
 
 import sys
-from collections.abc import MutableSequence
+from collections.abc import Callable, Iterable, MutableSequence
 from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, overload
 
 import inflect
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 __all__ = [
     "hashable",
     "append",
+    "apply",
     "eval_in_caller_frame",
     "NO_ARGUMENT",
     "read_text",
@@ -48,6 +49,11 @@ def append(seq: MutableSequence[T], elem: T) -> int:
 
     seq.append(elem)
     return len(seq) - 1
+
+
+def apply(func: Callable[[T], None], iterable: Iterable[T]) -> None:
+    for elem in iterable:
+        func(elem)
 
 
 # TODO deprecate
