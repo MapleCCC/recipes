@@ -2,6 +2,7 @@ import inspect
 import os.path
 import sys
 from collections.abc import Callable
+from inspect import Parameter
 from types import FrameType, FunctionType, LambdaType, MethodType
 from typing import Any, Optional
 
@@ -23,6 +24,7 @@ __all__ = [
     "bind_arguments",
     "get_frame_curr_line",
     "getcallerframe",
+    "inspect_parameter",
 ]
 
 
@@ -132,3 +134,9 @@ def getcallerframe() -> FrameType:
         raise RuntimeError(
             "getcallerframe() should be called from inside callable"
         ) from None
+
+
+def inspect_parameters(func: Callable) -> list[Parameter]:
+    """Return a list of inspected parameters of the function"""
+
+    return list(inspect.signature(func).parameters.values())
