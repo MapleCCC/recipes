@@ -1,9 +1,10 @@
 from __future__ import annotations  # for types imported from _typeshed
 
 import asyncio
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
+from functools import wraps
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, ParamSpec
 
 from .builtins import read_text, write_text
 
@@ -12,7 +13,16 @@ if TYPE_CHECKING:
     from _typeshed import StrOrBytesPath, StrPath
 
 
-__all__ = ["asyncio_subprocess_check_output", "aread_text", "awrite_text"]
+__all__ = [
+    "asyncio_subprocess_check_output",
+    "aread_text",
+    "awrite_text",
+    "asyncio_run",
+]
+
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 async def asyncio_subprocess_check_output(
@@ -60,3 +70,13 @@ async def awrite_text(file: StrPath, text: str, encoding: str = "utf-8") -> None
     """
 
     return await asyncio.to_thread(write_text, file, text, encoding)
+
+
+def asyncio_run(func: Callable[P, Awaitable[R]]) -> Callable[P, R]:
+    """Make an async function sync, by wrapping it inside `asyncio.run()` call"""
+
+    @wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        return asyncio.run(func(*args, **kwargs))
+
+    return wrapper
