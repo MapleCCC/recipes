@@ -18,6 +18,7 @@ __all__ = [
     "aread_text",
     "awrite_text",
     "asyncio_run",
+    "maybe_install_uvloop",
 ]
 
 
@@ -80,3 +81,12 @@ def asyncio_run(func: Callable[P, Awaitable[R]]) -> Callable[P, R]:
         return asyncio.run(func(*args, **kwargs))
 
     return wrapper
+
+
+def maybe_install_uvloop() -> None:
+    try:
+        import uvloop  # type: ignore
+    except ImportError:
+        pass
+    else:
+        uvloop.install()
