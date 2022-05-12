@@ -1,9 +1,11 @@
 from __future__ import annotations  # for types imported from _typeshed
 
+import atexit
 import sys
 from collections.abc import Callable, Iterable, MutableSequence
 from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, overload
 
+import click
 import inflect
 
 
@@ -23,6 +25,7 @@ __all__ = [
     "write_text",
     "ensure_type",
     "try_decode",
+    "schedule_pause_at_exit",
 ]
 
 
@@ -188,3 +191,36 @@ def try_decode(blob: bytes) -> str:
 
         detected_encoding = cchardet.detect(blob)["encoding"]
         return blob.decode(detected_encoding)
+
+
+registered = False
+
+# Wrap `click.pause()` into a private function, because `atexit.unregister()` will
+# unregister every occurrence of the function in the atexit call stack. It's possible
+# that other code registers `click.pause()` and we don't want to accidentally remove
+# theirs.
+my_pause = lambda msg: click.pause(msg)
+
+
+def schedule_pause_at_exit(message: str | None = None) -> None:
+
+    global registered
+
+    if registered:
+        raise RuntimeError("pause-at-exit has already been scheduled")
+
+    if message is None:
+        message = "Press any key to exit"
+
+    atexit.register(my_pause, message)
+
+    registered = True
+
+
+def cancel() -> None:
+    global registered
+    atexit.unregister(my_pause)
+    registered = False
+
+
+schedule_pause_at_exit.cancel = cancel
