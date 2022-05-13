@@ -38,6 +38,9 @@ __all__ = [
 
 T = TypeVar("T")
 T_contra = TypeVar("T_contra", contravariant=True)
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+
 S = TypeVar("S")
 
 P = ParamSpec("P")
@@ -172,19 +175,28 @@ def curry(func: K0Callable[T, R]) -> CurriedCallable[T, R]:
     return intermediate
 
 
-# TODO what's the conventional name of such a function (Monoid a)->(b->a)->(list b)->a ?
-# TODO use curry tricks to flatten code indentation level
+def curry1(func: Callable[[T], R]) -> Callable[[T], R]:
+    return cast(Callable[[T], R], curry(func))
 
-def mapreduce(
-    monoid: Monoid[R],
-) -> Callable[[P1Callable[T, S, R]], PNCallable[T, S, R]]:
+
+def curry2(func: Callable[[T, S], R]) -> Callable[[T], Callable[[S], R]]:
+    return cast(Callable[[T], Callable[[S], R]], curry(func))
+
+
+def curry3(
+    func: Callable[[T, T1, T2], R]
+) -> Callable[[T], Callable[[T1], Callable[[T2], R]]]:
+    return cast(Callable[[T], Callable[[T1], Callable[[T2], R]]], curry(func))
+
+
+# TODO what's the conventional name of such a function (Monoid a)->(b->a)->(list b)->a ?
+
+@curry2
+def mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]:
     """Transform a function that returns monoid such that it can receive an iterable of input"""
 
-    def decorator(func: P1Callable[T, S, R]) -> PNCallable[T, S, R]:
-        @wraps(func)
-        def wrapper(*xs: T, **kwargs: S) -> R:
-            return monoid.mconcat(func(x, **kwargs) for x in xs)
+    @wraps(func)
+    def wrapper(*xs: T, **kwargs: S) -> R:
+        return monoid.mconcat(func(x, **kwargs) for x in xs)
 
-        return wrapper
-
-    return decorator
+    return wrapper
