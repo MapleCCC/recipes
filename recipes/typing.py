@@ -4,20 +4,23 @@ from typing import Protocol, TypeVar
 from typing_extensions import ParamSpec
 
 
-__all__ = [
-    "IdentityDecorator",
-    "Eq",
-    "Ord",
-    "SinglePosArgCallable",
-    "MultiplePosArgCallable",
-    "AnyPosArgCallable",
-]
+__all__ = ["IdentityDecorator", "Eq", "Ord"]
 
 
 T = TypeVar("T")
 T_contra = TypeVar("T_contra", contravariant=True)
+T1_contra = TypeVar("T1_contra", contravariant=True)
+T2_contra = TypeVar("T2_contra", contravariant=True)
+T3_contra = TypeVar("T3_contra", contravariant=True)
+T4_contra = TypeVar("T4_contra", contravariant=True)
+
 S = TypeVar("S")
 S_contra = TypeVar("S_contra", contravariant=True)
+S1_contra = TypeVar("S1_contra", contravariant=True)
+S2_contra = TypeVar("S2_contra", contravariant=True)
+S3_contra = TypeVar("S3_contra", contravariant=True)
+S4_contra = TypeVar("S4_contra", contravariant=True)
+
 R_co = TypeVar("R_co", covariant=True)
 
 P = ParamSpec("P")
@@ -57,23 +60,22 @@ class P0K0Callable(Protocol[R_co]):
         ...
 
 
-class P0KPCallable(Protocol[T_contra, R_co]):
+class P0KNCallable(Protocol[T_contra, R_co]):
     def __call__(self, **__kwarg: T_contra) -> R_co:
         ...
 
 
-class PPK0Callable(Protocol[T_contra, R_co]):
+class PNK0Callable(Protocol[T_contra, R_co]):
     def __call__(self, *__args: T_contra) -> R_co:
         ...
 
 
-class PPKPCallable(Protocol[T_contra, S_contra, R_co]):
+class PNKNCallable(Protocol[T_contra, S_contra, R_co]):
     def __call__(self, *__args: T_contra, **__kwargs: S_contra) -> R_co:
         ...
 
 
-# TODO can we use @overload to unify P1K0Callable and P1KPCallable into
-# one class instead of two ?
+# TODO can we use @overload to unify these classes into one ?
 
 
 class P1K0Callable(Protocol[T_contra, R_co]):
@@ -81,15 +83,160 @@ class P1K0Callable(Protocol[T_contra, R_co]):
         ...
 
 
-class P1KPCallable(Protocol[T_contra, S_contra, R_co]):
+class P2K0Callable(Protocol[T_contra, T1_contra, R_co]):
+    def __call__(self, __x: T_contra, __x1: T1_contra) -> R_co:
+        ...
+
+
+class P3K0Callable(Protocol[T_contra, T1_contra, T2_contra, R_co]):
+    def __call__(self, __x: T_contra, __x1: T1_contra, __x2: T2_contra) -> R_co:
+        ...
+
+
+class P4K0Callable(Protocol[T_contra, T1_contra, T2_contra, T3_contra, R_co]):
+    def __call__(
+        self, __x: T_contra, __x1: T1_contra, __x2: T2_contra, __x3: T3_contra
+    ) -> R_co:
+        ...
+
+
+class P5K0Callable(
+    Protocol[T_contra, T1_contra, T2_contra, T3_contra, T4_contra, R_co]
+):
+    def __call__(
+        self,
+        __x: T_contra,
+        __x1: T1_contra,
+        __x2: T2_contra,
+        __x3: T3_contra,
+        __x4: T4_contra,
+    ) -> R_co:
+        ...
+
+
+K0Callable = (
+    PNK0Callable[T, R]
+    | P5K0Callable[T, T, T, T, T, R]
+    | P4K0Callable[T, T, T, T, R]
+    | P3K0Callable[T, T, T, R]
+    | P2K0Callable[T, T, R]
+    | P1K0Callable[T, R]
+    | P0K0Callable[R]
+)
+
+
+class P1K1Callable(Protocol[T_contra, S_contra, R_co]):
+    def __call__(self, __arg: T_contra, *, __x: S_contra) -> R_co:
+        ...
+
+
+class P1K2Callable(Protocol[T_contra, S_contra, S1_contra, R_co]):
+    def __call__(self, __arg: T_contra, *, __x: S_contra, __x1: S1_contra) -> R_co:
+        ...
+
+
+class P1K3Callable(Protocol[T_contra, S_contra, S1_contra, S2_contra, R_co]):
+    def __call__(
+        self, __arg: T_contra, *, __x: S_contra, __x1: S1_contra, __x2: S2_contra
+    ) -> R_co:
+        ...
+
+
+class P1K4Callable(Protocol[T_contra, S_contra, S1_contra, S2_contra, S3_contra, R_co]):
+    def __call__(
+        self,
+        __arg: T_contra,
+        *,
+        __x: S_contra,
+        __x1: S1_contra,
+        __x2: S2_contra,
+        __x3: S3_contra
+    ) -> R_co:
+        ...
+
+
+class P1K5Callable(
+    Protocol[T_contra, S_contra, S1_contra, S2_contra, S3_contra, S4_contra, R_co]
+):
+    def __call__(
+        self,
+        __arg: T_contra,
+        *,
+        __x: S_contra,
+        __x1: S1_contra,
+        __x2: S2_contra,
+        __x3: S3_contra,
+        __x4: S4_contra
+    ) -> R_co:
+        ...
+
+
+class P1KNCallable(Protocol[T_contra, S_contra, R_co]):
     def __call__(self, __arg: T_contra, **__kwargs: S_contra) -> R_co:
         ...
 
 
-P1Callable = P1KPCallable[T, S, R] | P1K0Callable[T, R]
-PPCallable = PPKPCallable[T, S, R] | PPK0Callable[T, R]
-PNCallable = P1Callable[T, S, R] | PPCallable[T, S, R]
+P1Callable = (
+    P1KNCallable[T, S, R]
+    | P1K5Callable[T, S, S, S, S, S, R]
+    | P1K4Callable[T, S, S, S, S, R]
+    | P1K3Callable[T, S, S, S, R]
+    | P1K2Callable[T, S, S, R]
+    | P1K1Callable[T, S, R]
+    | P1K0Callable[T, R]
+)
 
-SinglePosArgCallable = P1Callable[T, S, R]
-MultiplePosArgCallable = PPCallable[T, S, R]
-AnyPosArgCallable = PNCallable[T, S, R]
+
+class PNK1Callable(Protocol[T_contra, S_contra, R_co]):
+    def __call__(self, *__args: T_contra, __x: S_contra) -> R_co:
+        ...
+
+
+class PNK2Callable(Protocol[T_contra, S_contra, S1_contra, R_co]):
+    def __call__(self, *__args: T_contra, __x: S_contra, __x1: S1_contra) -> R_co:
+        ...
+
+
+class PNK3Callable(Protocol[T_contra, S_contra, S1_contra, S2_contra, R_co]):
+    def __call__(
+        self, *__args: T_contra, __x: S_contra, __x1: S1_contra, __x2: S2_contra
+    ) -> R_co:
+        ...
+
+
+class PNK4Callable(Protocol[T_contra, S_contra, S1_contra, S2_contra, S3_contra, R_co]):
+    def __call__(
+        self,
+        *__args: T_contra,
+        __x: S_contra,
+        __x1: S1_contra,
+        __x2: S2_contra,
+        __x3: S3_contra
+    ) -> R_co:
+        ...
+
+
+class PNK5Callable(
+    Protocol[T_contra, S_contra, S1_contra, S2_contra, S3_contra, S4_contra, R_co]
+):
+    def __call__(
+        self,
+        *__args: T_contra,
+        __x: S_contra,
+        __x1: S1_contra,
+        __x2: S2_contra,
+        __x3: S3_contra,
+        __x4: S4_contra
+    ) -> R_co:
+        ...
+
+
+PNCallable = (
+    PNKNCallable[T, S, R]
+    | PNK5Callable[T, S, S, S, S, S, R]
+    | PNK4Callable[T, S, S, S, S, R]
+    | PNK3Callable[T, S, S, S, R]
+    | PNK2Callable[T, S, S, R]
+    | PNK1Callable[T, S, R]
+    | PNK0Callable[T, R]
+)

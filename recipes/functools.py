@@ -20,7 +20,7 @@ from lazy_object_proxy import Proxy
 from typing_extensions import Self
 
 from .monoids import Monoid
-from .typing import MultiplePosArgCallable, PPK0Callable, SinglePosArgCallable
+from .typing import K0Callable, P1Callable, PNCallable
 
 
 __all__ = [
@@ -141,7 +141,7 @@ class CurriedCallable(Protocol[T_contra, R_co]):
         ...
 
 
-def curry(func: PPK0Callable[T, R]) -> CurriedCallable[T, R]:
+def curry(func: K0Callable[T, R]) -> CurriedCallable[T, R]:
 
     params = inspect.signature(func).parameters.values()
 
@@ -177,13 +177,10 @@ def curry(func: PPK0Callable[T, R]) -> CurriedCallable[T, R]:
 
 def mapreduce(
     monoid: Monoid[R],
-) -> Callable[[SinglePosArgCallable[T, S, R]], MultiplePosArgCallable[T, S, R]]:
+) -> Callable[[P1Callable[T, S, R]], PNCallable[T, S, R]]:
     """Transform a function that returns monoid such that it can receive an iterable of input"""
 
-    def decorator(
-        func: SinglePosArgCallable[T, S, R]
-    ) -> MultiplePosArgCallable[T, S, R]:
-
+    def decorator(func: P1Callable[T, S, R]) -> PNCallable[T, S, R]:
         @wraps(func)
         def wrapper(*xs: T, **kwargs: S) -> R:
             return monoid.mconcat(func(x, **kwargs) for x in xs)
