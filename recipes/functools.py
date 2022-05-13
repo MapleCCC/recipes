@@ -195,14 +195,13 @@ def curry3(
 
 # fmt: off
 @overload
-def mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
+def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
 @overload
-def mapreduce(monoid: Monoid[R], func: P1Callable[T, S, Awaitable[R]]) -> PNCallable[T, S, Awaitable[R]]: ...
+def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, Awaitable[R]]) -> PNCallable[T, S, Awaitable[R]]: ...
 # fmt: on
 
 
-@curry2
-def mapreduce(
+def _mapreduce(
     monoid: Monoid[R], func: P1Callable[T, S, R | Awaitable[R]]
 ) -> PNCallable[T, S, R | Awaitable[R]]:
     """Transform a function that returns monoid such that it can receive an iterable of input"""
@@ -226,3 +225,6 @@ def mapreduce(
             return monoid.mconcat(sync_func(x, **kwargs) for x in xs)
 
         return wrapper
+
+
+mapreduce = curry2(_mapreduce)
