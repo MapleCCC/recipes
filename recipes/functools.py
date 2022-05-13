@@ -22,7 +22,7 @@ from lazy_object_proxy import Proxy
 from typing_extensions import Self
 
 from .monoids import Monoid
-from .typing import K0Callable, P1Callable, PNCallable
+from .typing import K0Callable, P1Callable, P1K0Callable, PNCallable, PNK0Callable
 
 
 __all__ = [
@@ -193,14 +193,18 @@ def curry3(
 
 # TODO what's the conventional name of such a function (Monoid a)->(b->a)->(list b)->a ?
 
+# TODO Ask pyright developers why applying curry2() to an @overload function leads to
+# such problem ?
+#
 # fmt: off
-@overload
-def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, Awaitable[R]]) -> PNCallable[T, S, Awaitable[R]]: ...
-@overload
-def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
+# @overload
+# def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, Awaitable[R]]) -> PNCallable[T, S, Awaitable[R]]: ...
+# @overload
+# def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
 # fmt: on
 
 
+@curry2
 def _mapreduce(
     monoid: Monoid[R], func: P1Callable[T, S, R | Awaitable[R]]
 ) -> PNCallable[T, S, R | Awaitable[R]]:
@@ -227,4 +231,34 @@ def _mapreduce(
         return wrapper
 
 
-mapreduce = curry2(_mapreduce)
+# Use a temporary Protocol to express the return type of `mapreduce()`. Hopefully in the
+# future we don't have to do such dirty hacks when Python static type system becomes
+# more powerful and expressive.
+
+
+class mapreduce_return_type(Protocol[R]):
+    # Specialized overload for common case
+    @overload
+    def __call__(
+        self, __func: P1K0Callable[T, Awaitable[R]]
+    ) -> PNK0Callable[T, Awaitable[R]]:
+        ...
+
+    @overload
+    def __call__(
+        self, __func: P1Callable[T, S, Awaitable[R]]
+    ) -> PNCallable[T, S, Awaitable[R]]:
+        ...
+
+    # Specialized overload for common case
+    @overload
+    def __call__(self, __func: P1K0Callable[T, R]) -> PNK0Callable[T, R]:
+        ...
+
+    @overload
+    def __call__(self, __func: P1Callable[T, S, R]) -> PNCallable[T, S, R]:
+        ...
+
+
+def mapreduce(monoid: Monoid[R]) -> mapreduce_return_type[R]:
+    return cast(mapreduce_return_type[R], _mapreduce(monoid))
