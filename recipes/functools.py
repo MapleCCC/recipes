@@ -195,9 +195,9 @@ def curry3(
 
 # fmt: off
 @overload
-def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
-@overload
 def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, Awaitable[R]]) -> PNCallable[T, S, Awaitable[R]]: ...
+@overload
+def _mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
 # fmt: on
 
 
