@@ -6,6 +6,9 @@ from typing import Any, Awaitable, Concatenate, NoReturn, ParamSpec, TypeVar, ca
 
 from lazy_object_proxy import Proxy
 
+from .monoids import Monoid
+from .typing import MultiplePosArgCallable, SinglePosArgCallable
+
 
 __all__ = [
     "noop",
@@ -15,8 +18,12 @@ __all__ = [
     "nulldecorator",
     "inject_pre_hook",
     "inject_post_hook",
+    "mapreduce",
 ]
 
+
+T = TypeVar("T")
+S = TypeVar("S")
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -103,3 +110,24 @@ def inject_post_hook(
         return posthook(result, *args, **kwargs)
 
     return wrapper
+
+
+# TODO what's the conventional name of such a function (Monoid a)->(b->a)->(list b)->a ?
+# TODO use curry tricks to flatten code indentation level
+
+def mapreduce(
+    monoid: Monoid[R],
+) -> Callable[[SinglePosArgCallable[T, S, R]], MultiplePosArgCallable[T, S, R]]:
+    """Transform a function that returns monoid such that it can receive an iterable of input"""
+
+    def decorator(
+        func: SinglePosArgCallable[T, S, R]
+    ) -> MultiplePosArgCallable[T, S, R]:
+
+        @wraps(func)
+        def wrapper(*xs: T, **kwargs: S) -> R:
+            return monoid.mconcat(func(x, **kwargs) for x in xs)
+
+        return wrapper
+
+    return decorator

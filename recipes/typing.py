@@ -4,8 +4,20 @@ from typing import Protocol, TypeVar
 from typing_extensions import ParamSpec
 
 
-__all__ = ["IdentityDecorator", "Eq", "Ord"]
+__all__ = [
+    "IdentityDecorator",
+    "Eq",
+    "Ord",
+    "SinglePosArgCallable",
+    "MultiplePosArgCallable",
+]
 
+
+T = TypeVar("T")
+T_contra = TypeVar("T_contra", contravariant=True)
+S = TypeVar("S")
+S_contra = TypeVar("S_contra", contravariant=True)
+R_co = TypeVar("R_co", covariant=True)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -37,3 +49,25 @@ class Ord(Eq, Protocol):
 
     def __ge__(self, __other) -> bool:
         return not self.__lt__(__other)
+
+
+# TODO can we use @overload to unify OnePargCallable and OnePargUnzeroKargCallable into
+# one class instead of two ?
+
+
+class OnePargCallable(Protocol[T_contra, R_co]):
+    def __call__(self, __arg: T_contra) -> R_co:
+        ...
+
+
+class OnePargNonzeroKargCallable(Protocol[T_contra, S_contra, R_co]):
+    def __call__(self, __arg: T_contra, **__kwargs: S_contra) -> R_co:
+        ...
+
+
+SinglePosArgCallable = OnePargNonzeroKargCallable[T, S, R] | OnePargCallable[T, R]
+
+
+class MultiplePosArgCallable(Protocol[T_contra, S_contra, R_co]):
+    def __call__(self, *__args: T_contra, **__kwargs: S_contra) -> R_co:
+        ...
