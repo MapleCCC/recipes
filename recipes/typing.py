@@ -10,6 +10,7 @@ __all__ = [
     "Ord",
     "SinglePosArgCallable",
     "MultiplePosArgCallable",
+    "AnyPosArgCallable",
 ]
 
 
@@ -51,23 +52,44 @@ class Ord(Eq, Protocol):
         return not self.__lt__(__other)
 
 
-# TODO can we use @overload to unify OnePargCallable and OnePargUnzeroKargCallable into
+class P0K0Callable(Protocol[R_co]):
+    def __call__(self) -> R_co:
+        ...
+
+
+class P0KPCallable(Protocol[T_contra, R_co]):
+    def __call__(self, **__kwarg: T_contra) -> R_co:
+        ...
+
+
+class PPK0Callable(Protocol[T_contra, R_co]):
+    def __call__(self, *__args: T_contra) -> R_co:
+        ...
+
+
+class PPKPCallable(Protocol[T_contra, S_contra, R_co]):
+    def __call__(self, *__args: T_contra, **__kwargs: S_contra) -> R_co:
+        ...
+
+
+# TODO can we use @overload to unify P1K0Callable and P1KPCallable into
 # one class instead of two ?
 
 
-class OnePargCallable(Protocol[T_contra, R_co]):
+class P1K0Callable(Protocol[T_contra, R_co]):
     def __call__(self, __arg: T_contra) -> R_co:
         ...
 
 
-class OnePargNonzeroKargCallable(Protocol[T_contra, S_contra, R_co]):
+class P1KPCallable(Protocol[T_contra, S_contra, R_co]):
     def __call__(self, __arg: T_contra, **__kwargs: S_contra) -> R_co:
         ...
 
 
-SinglePosArgCallable = OnePargNonzeroKargCallable[T, S, R] | OnePargCallable[T, R]
+P1Callable = P1KPCallable[T, S, R] | P1K0Callable[T, R]
+PPCallable = PPKPCallable[T, S, R] | PPK0Callable[T, R]
+PNCallable = P1Callable[T, S, R] | PPCallable[T, S, R]
 
-
-class MultiplePosArgCallable(Protocol[T_contra, S_contra, R_co]):
-    def __call__(self, *__args: T_contra, **__kwargs: S_contra) -> R_co:
-        ...
+SinglePosArgCallable = P1Callable[T, S, R]
+MultiplePosArgCallable = PPCallable[T, S, R]
+AnyPosArgCallable = PNCallable[T, S, R]

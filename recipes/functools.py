@@ -1,13 +1,26 @@
+from __future__ import annotations
+
 import inspect
 import types
 from collections.abc import Callable
 from functools import partial, wraps
-from typing import Any, Awaitable, Concatenate, NoReturn, ParamSpec, TypeVar, cast
+from inspect import Parameter
+from typing import (
+    Any,
+    Awaitable,
+    Concatenate,
+    NoReturn,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    cast,
+)
 
 from lazy_object_proxy import Proxy
+from typing_extensions import Self
 
 from .monoids import Monoid
-from .typing import MultiplePosArgCallable, SinglePosArgCallable
+from .typing import MultiplePosArgCallable, PPK0Callable, SinglePosArgCallable
 
 
 __all__ = [
@@ -18,15 +31,18 @@ __all__ = [
     "nulldecorator",
     "inject_pre_hook",
     "inject_post_hook",
+    "curry",
     "mapreduce",
 ]
 
 
 T = TypeVar("T")
+T_contra = TypeVar("T_contra", contravariant=True)
 S = TypeVar("S")
 
 P = ParamSpec("P")
 R = TypeVar("R")
+R_co = TypeVar("R_co", covariant=True)
 R2 = TypeVar("R2")
 
 
@@ -110,6 +126,50 @@ def inject_post_hook(
         return posthook(result, *args, **kwargs)
 
     return wrapper
+
+
+def is_positional_parameter(param: Parameter) -> bool:
+    return param.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+
+
+def is_mandatory_positional_parameter(param: Parameter) -> bool:
+    return is_positional_parameter(param) and param.default is Parameter.empty
+
+
+class CurriedCallable(Protocol[T_contra, R_co]):
+    def __call__(self, *__x: T_contra) -> Self | R_co:
+        ...
+
+
+def curry(func: PPK0Callable[T, R]) -> CurriedCallable[T, R]:
+
+    params = inspect.signature(func).parameters.values()
+
+    if not all(is_mandatory_positional_parameter(p) for p in params):
+        raise ValueError(
+            "@curry decorates function with only mandatory positional parameters"
+        )
+
+    class intermediate:
+        """Intermediate object"""
+
+        def __init__(self, *args: T) -> None:
+            self.args = args
+
+        __slots__ = "args"
+
+        def __call__(self, *args: T) -> intermediate | R:
+
+            rem = len(params) - len(self.args) - len(args)
+
+            if rem > 0:
+                return intermediate(*self.args, *args)
+            elif rem == 0:
+                return func(*self.args, *args)
+            else:
+                raise ValueError("too many arguments")
+
+    return intermediate
 
 
 # TODO what's the conventional name of such a function (Monoid a)->(b->a)->(list b)->a ?
