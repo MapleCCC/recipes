@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import types
 from collections.abc import Callable
 from functools import partial, wraps
-from inspect import Parameter
+from inspect import Parameter, isasyncgenfunction
 from typing import (
     Any,
     Awaitable,
@@ -14,6 +15,7 @@ from typing import (
     Protocol,
     TypeVar,
     cast,
+    overload,
 )
 
 from lazy_object_proxy import Proxy
@@ -191,12 +193,36 @@ def curry3(
 
 # TODO what's the conventional name of such a function (Monoid a)->(b->a)->(list b)->a ?
 
+# fmt: off
+@overload
+def mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]: ...
+@overload
+def mapreduce(monoid: Monoid[R], func: P1Callable[T, S, Awaitable[R]]) -> PNCallable[T, S, Awaitable[R]]: ...
+# fmt: on
+
+
 @curry2
-def mapreduce(monoid: Monoid[R], func: P1Callable[T, S, R]) -> PNCallable[T, S, R]:
+def mapreduce(
+    monoid: Monoid[R], func: P1Callable[T, S, R | Awaitable[R]]
+) -> PNCallable[T, S, R | Awaitable[R]]:
     """Transform a function that returns monoid such that it can receive an iterable of input"""
 
-    @wraps(func)
-    def wrapper(*xs: T, **kwargs: S) -> R:
-        return monoid.mconcat(func(x, **kwargs) for x in xs)
+    if isasyncgenfunction(func):
+        async_func = cast(P1Callable[T, S, Awaitable[R]], func)
 
-    return wrapper
+        @wraps(func)
+        async def async_wrapper(*xs: T, **kwargs: S) -> R:
+            coros = (async_func(x, **kwargs) for x in xs)
+            rets = await asyncio.gather(*coros)
+            return monoid.mconcat(rets)
+
+        return async_wrapper
+
+    else:
+        sync_func = cast(P1Callable[T, S, R], func)
+
+        @wraps(func)
+        def wrapper(*xs: T, **kwargs: S) -> R:
+            return monoid.mconcat(sync_func(x, **kwargs) for x in xs)
+
+        return wrapper
