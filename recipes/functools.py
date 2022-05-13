@@ -1,11 +1,10 @@
 import inspect
 import types
 from collections.abc import Callable
-from functools import partial
-from typing import Awaitable, NoReturn, TypeVar, cast
+from functools import partial, wraps
+from typing import Any, Awaitable, Concatenate, NoReturn, ParamSpec, TypeVar, cast
 
 from lazy_object_proxy import Proxy
-from typing_extensions import Concatenate, ParamSpec
 
 
 __all__ = [
@@ -24,7 +23,7 @@ R = TypeVar("R")
 R2 = TypeVar("R2")
 
 
-def noop(*_, **__) -> None:
+def noop(*_: Any, **__: Any) -> None:
     """A no-op function"""
 
 
@@ -44,9 +43,11 @@ def async_def(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
 
     code = func.__code__
     new_code = code.replace(co_flags=code.co_flags | inspect.CO_COROUTINE)
-    return types.FunctionType(
+    new_func = types.FunctionType(
         new_code, func.__globals__, func.__name__, func.__defaults__, func.__closure__
     )
+
+    return cast(Callable[P, Awaitable[R]], new_func)
 
 
 # Although the return value is actually a Proxy instance, we type annotate it as R,
@@ -60,11 +61,19 @@ def lazy_call(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     Call a function lazily.
 
     The return value is lazily evaluated. The actual function execution is delayed until
-    the return value is acutally used by external code.
+    the return value is acutally used by the external code.
     """
 
     return cast(R, Proxy(partial(func, *args, **kwargs)))
 
+
+# TODO update the type annotation to reflect the fact that nulldecorator can also be
+# applied onto a class definition.
+
+# TODO can be further simplied to be sth like:
+# ```
+# nulldecorator: IdentityDecorator = identity
+# ```
 
 def nulldecorator(func: Callable[P, R]) -> Callable[P, R]:
     """A null decorator, intended to be used as a stand-in for an optional decorator"""
@@ -75,6 +84,7 @@ def nulldecorator(func: Callable[P, R]) -> Callable[P, R]:
 def inject_pre_hook(prehook: Callable[P, None], func: Callable[P, R]) -> Callable[P, R]:
     """Inject pre hook into a function"""
 
+    @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         prehook(*args, **kwargs)
         return func(*args, **kwargs)
@@ -87,6 +97,7 @@ def inject_post_hook(
 ) -> Callable[P, R2]:
     """Inject post hook into a function"""
 
+    @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R2:
         result = func(*args, **kwargs)
         return posthook(result, *args, **kwargs)
