@@ -37,10 +37,12 @@ S2_contra = TVar("S2_contra", contravariant=True)
 S3_contra = TVar("S3_contra", contravariant=True)
 S4_contra = TVar("S4_contra", contravariant=True)
 
-R_co = TVar("R_co", covariant=True)
+P = TVar("P")
 
-P = ParamSpec("P")
+Ps = ParamSpec("Ps")
+
 R = TVar("R")
+R_co = TVar("R_co", covariant=True)
 
 
 ### Shorter, handy aliases
@@ -57,7 +59,7 @@ Returns: TypeAlias = Call[..., R]
 
 # TODO should it be a Protocol?
 class IdentityDecorator:
-    def __call__(self, __func: Callable[P, R]) -> Callable[P, R]:
+    def __call__(self, __func: Call[Ps, R]) -> Call[Ps, R]:
         ...
 
 
