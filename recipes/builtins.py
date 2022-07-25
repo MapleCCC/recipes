@@ -124,36 +124,20 @@ def write_text(file: StrPath, text: str, encoding: str = "utf-8") -> None:
         f.write(text)
 
 
+# fmt: off
 @overload
-def ensure_type(obj: object, typ: type[T]) -> T:
-    ...
-
-
+def ensure_type(obj: object, typ: type[T]) -> T: ...
 @overload
-def ensure_type(obj: object, typ: tuple[type[T]]) -> T:
-    ...
-
-
+def ensure_type(obj: object, typ: tuple[type[T]]) -> T: ...
 @overload
-def ensure_type(obj: object, typ: tuple[type[T], type[T1]]) -> T | T1:
-    ...
-
-
+def ensure_type(obj: object, typ: tuple[type[T], type[T1]]) -> T | T1: ...
 @overload
-def ensure_type(obj: object, typ: tuple[type[T], type[T1], type[T2]]) -> T | T1 | T2:
-    ...
-
-
+def ensure_type(obj: object, typ: tuple[type[T], type[T1], type[T2]]) -> T | T1 | T2: ...
 @overload
-def ensure_type(
-    obj: object, typ: tuple[type[T], type[T1], type[T2], type[T3]]
-) -> T | T1 | T2 | T3:
-    ...
-
-
+def ensure_type(obj: object, typ: tuple[type[T], type[T1], type[T2], type[T3]]) -> T | T1 | T2 | T3: ...
 @overload
-def ensure_type(obj: object, typ: tuple[type[T], ...]) -> T:
-    ...
+def ensure_type(obj: object, typ: tuple[type[T], ...]) -> T: ...
+# fmt: on
 
 
 def ensure_type(obj: object, typ: type[T] | tuple[type[T], ...]) -> T:
