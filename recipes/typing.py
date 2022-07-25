@@ -1,28 +1,28 @@
 from collections.abc import Callable
-from typing import ParamSpec, Protocol, TypeVar
+from typing import ParamSpec, Protocol, TypeVar as TVar
 
 
 __all__ = ["IdentityDecorator", "Eq", "Ord"]
 
 
-T = TypeVar("T")
-T_contra = TypeVar("T_contra", contravariant=True)
-T1_contra = TypeVar("T1_contra", contravariant=True)
-T2_contra = TypeVar("T2_contra", contravariant=True)
-T3_contra = TypeVar("T3_contra", contravariant=True)
-T4_contra = TypeVar("T4_contra", contravariant=True)
+T = TVar("T")
+T_contra = TVar("T_contra", contravariant=True)
+T1_contra = TVar("T1_contra", contravariant=True)
+T2_contra = TVar("T2_contra", contravariant=True)
+T3_contra = TVar("T3_contra", contravariant=True)
+T4_contra = TVar("T4_contra", contravariant=True)
 
-S = TypeVar("S")
-S_contra = TypeVar("S_contra", contravariant=True)
-S1_contra = TypeVar("S1_contra", contravariant=True)
-S2_contra = TypeVar("S2_contra", contravariant=True)
-S3_contra = TypeVar("S3_contra", contravariant=True)
-S4_contra = TypeVar("S4_contra", contravariant=True)
+S = TVar("S")
+S_contra = TVar("S_contra", contravariant=True)
+S1_contra = TVar("S1_contra", contravariant=True)
+S2_contra = TVar("S2_contra", contravariant=True)
+S3_contra = TVar("S3_contra", contravariant=True)
+S4_contra = TVar("S4_contra", contravariant=True)
 
-R_co = TypeVar("R_co", covariant=True)
+R_co = TVar("R_co", covariant=True)
 
 P = ParamSpec("P")
-R = TypeVar("R")
+R = TVar("R")
 
 
 # TODO should it be a Protocol?
