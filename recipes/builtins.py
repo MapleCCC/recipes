@@ -222,3 +222,11 @@ def cancel() -> None:
 
 
 schedule_pause_at_exit.cancel = cancel
+
+
+def lines(s: str) -> list[str]:
+    return s.splitlines()
+
+
+def unlines(l: list[str]) -> str:
+    return "\n".join(l)
