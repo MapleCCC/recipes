@@ -3,7 +3,7 @@ from __future__ import annotations  # for types imported from _typeshed
 import atexit
 import sys
 from collections.abc import Callable, Iterable, MutableSequence
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 import click
 import inflect
@@ -135,21 +135,19 @@ def ensure_type(obj: object, typ: tuple[type[T]]) -> T:
 
 
 @overload
-def ensure_type(obj: object, typ: tuple[type[T], type[T2]]) -> Union[T, T2]:
+def ensure_type(obj: object, typ: tuple[type[T], type[T1]]) -> T | T1:
+    ...
+
+
+@overload
+def ensure_type(obj: object, typ: tuple[type[T], type[T1], type[T2]]) -> T | T1 | T2:
     ...
 
 
 @overload
 def ensure_type(
-    obj: object, typ: tuple[type[T], type[T2], type[T3]]
-) -> Union[T, T2, T3]:
-    ...
-
-
-@overload
-def ensure_type(
-    obj: object, typ: tuple[type[T], type[T2], type[T3], type[T4]]
-) -> Union[T, T2, T3, T4]:
+    obj: object, typ: tuple[type[T], type[T1], type[T2], type[T3]]
+) -> T | T1 | T2 | T3:
     ...
 
 
@@ -158,7 +156,7 @@ def ensure_type(obj: object, typ: tuple[type[T], ...]) -> T:
     ...
 
 
-def ensure_type(obj: object, typ: Union[type[T], tuple[type[T], ...]]) -> T:
+def ensure_type(obj: object, typ: type[T] | tuple[type[T], ...]) -> T:
     """
     Return the same object unchanged, but raise TypeError if the object is not of the
     specified type.

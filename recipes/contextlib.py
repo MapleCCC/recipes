@@ -4,13 +4,12 @@ from collections.abc import Callable, Generator, Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
 from inspect import Parameter
 from types import FunctionType, TracebackType
-from typing import Any, TypeVar, Union, overload
+from typing import Any, ParamSpec, TypeVar, overload
 
 import libcst as cst
 import libcst.matchers
 from libcst.metadata import PositionProvider
 from more_itertools import one
-from typing_extensions import ParamSpec
 
 from .builtins import ensure_type
 from .cst import contains_outdented_comment, transform_source
@@ -171,7 +170,7 @@ def literal_block(func: Callable) -> str:
 # TODO in an ideal world, we should annotate the parameter `func` as of type
 # `FunctionType` to emphasize that it should be a user-defined function, not some
 # general callables.
-def literal_block(func: Callable = None) -> Union[str, AbstractContextManager[str]]:
+def literal_block(func: Callable = None) -> str | AbstractContextManager[str]:
     """
     Transform a block of code to literal string, and not execute the code. This utility
     is useful for writing source code in the form of literal string, while getting

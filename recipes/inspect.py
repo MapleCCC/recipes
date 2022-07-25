@@ -4,13 +4,12 @@ import sys
 from collections.abc import Callable
 from inspect import Parameter
 from types import FrameType, FunctionType, LambdaType, MethodType
-from typing import Any, Optional
+from typing import Any, ParamSpec
 
 import libcst as cst
 import libcst.matchers
 from libcst.metadata import PositionProvider
 from more_itertools import one
-from typing_extensions import ParamSpec
 
 from .builtins import ensure_type, read_text
 from .cst import contains_outdented_comment
@@ -113,7 +112,7 @@ def bind_arguments(
     return bound_arguments.arguments
 
 
-def get_frame_curr_line(frame: FrameType) -> Optional[str]:
+def get_frame_curr_line(frame: FrameType) -> str | None:
     """Get the current executing source line of a given frame, or None if not found"""
 
     frame_info = inspect.getframeinfo(frame, context=1)
