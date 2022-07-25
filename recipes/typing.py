@@ -1,8 +1,26 @@
-from collections.abc import Callable
-from typing import ParamSpec, Protocol, TypeVar as TVar
+from collections.abc import Callable as Call, Coroutine, Generator
+from typing import (
+    Concatenate as Concat,
+    ParamSpec,
+    Protocol,
+    TypeAlias,
+    TypeVar as TVar,
+)
 
 
-__all__ = ["IdentityDecorator", "Eq", "Ord"]
+__all__ = [
+    "Call",
+    "Concat",
+    "TVar",
+    "vtuple",
+    "Gen",
+    "Coro",
+    "Const",
+    "Returns",
+    "IdentityDecorator",
+    "Eq",
+    "Ord",
+]
 
 
 T = TVar("T")
@@ -23,6 +41,18 @@ R_co = TVar("R_co", covariant=True)
 
 P = ParamSpec("P")
 R = TVar("R")
+
+
+### Shorter, handy aliases
+
+# variadic tuple
+vtuple: TypeAlias = tuple[T, ...]
+
+Gen: TypeAlias = Generator[None, None, R_co]
+Coro: TypeAlias = Coroutine[None, None, R_co]
+
+Const: TypeAlias = Call[..., R]
+Returns: TypeAlias = Call[..., R]
 
 
 # TODO should it be a Protocol?
