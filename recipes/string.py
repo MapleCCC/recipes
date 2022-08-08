@@ -1,4 +1,4 @@
-__all__ = ["line_boundaries"]
+__all__ = ["line_boundaries", "beginswith"]
 
 
 # A collection of strings considered line boundaries
@@ -18,3 +18,9 @@ line_boundaries = [
     "\u2028",
     "\u2029",
 ]
+
+
+# Supplanted by `str.startswith()`
+def beginswith(s: str, prefix: str) -> bool:
+    """ Inverse of the `str.endswith` method """
+    return s[: len(prefix)] == prefix
